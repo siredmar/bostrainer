@@ -76,6 +76,25 @@ SCENARIOS = [
             '   "Angriffstrupp von Florian Birkach 47/1-1, Auftrag: Innenangriff über den Haupteingang, ein C-Rohr, kommen"'
         ),
     ),
+    Scenario(
+        key="4",
+        name="Truppführer ↔ Gruppenführer (Atemschutzeinsatz)",
+        description="Du bist Angriffstruppführer unter Atemschutz und meldest dem Gruppenführer",
+        user_role="Angriffstrupp (Florian Birkach 47/1-2)",
+        ai_role="Florian Birkach 47/1-1 (Gruppenführer)",
+        prompt_file="truppfuehrer.txt",
+        briefing=(
+            "B3 – Scheunenbrand in Birkach, Hauptstraße 12.\n"
+            "Du bist Angriffstruppführer und wurdest gerade unter Atemschutz\n"
+            "an der Atemschutzüberwachung angemeldet. Dein Trupp ist einsatzbereit.\n"
+            "Deine Aufgabe: Melde dich beim Gruppenführer, nimm den Einsatzauftrag\n"
+            "entgegen und melde regelmäßig deine Lage (Sicht, Temperatur, Brandherd, Flaschendruck)."
+        ),
+        first_message_hint=(
+            '💡 Erster Funkspruch z.B.:\n'
+            '   "Florian Birkach 47/1-1 von Angriffstrupp, unter Atemschutz angemeldet, einsatzbereit, kommen"'
+        ),
+    ),
 ]
 
 
@@ -88,9 +107,10 @@ def select_scenario() -> Scenario:
         print(f"      Gegenstelle: {s.ai_role}")
         print()
 
+    keys = "/".join(s.key for s in SCENARIOS)
     while True:
-        choice = input("Szenario wählen (1/2/3): ").strip()
+        choice = input(f"Szenario wählen ({keys}): ").strip()
         for s in SCENARIOS:
             if s.key == choice:
                 return s
-        print("Ungültige Auswahl, bitte 1, 2 oder 3 eingeben.")
+        print(f"Ungültige Auswahl, bitte {keys} eingeben.")
