@@ -30,7 +30,7 @@ class LLMProvider(ABC):
         ...
 
     @abstractmethod
-    def send(self, message: str) -> str:
+    def send(self, message: str, max_tokens: int = 512) -> str:
         """Send a user message and return the assistant's response.
 
         The provider is responsible for maintaining conversation history.

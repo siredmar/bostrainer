@@ -2,6 +2,7 @@ import random
 import time
 
 from audio import play_wav, record_until_release
+from evaluation import evaluate_transcript
 from llm import GeminiProvider
 from scenario import select_scenario
 from tts import TextToSpeech
@@ -85,6 +86,10 @@ def main() -> None:
         for i, entry in enumerate(transcript_log, 1):
             role = "DU" if entry["role"] == "user" else scenario.ai_role.upper()
             print(f"  {i:2d}. [{role}] {entry['text']}")
+
+        print("\n🔍 Auswertung wird erstellt...\n")
+        analysis = evaluate_transcript(llm, transcript_log, scenario.name)
+        print(analysis)
 
 
 if __name__ == "__main__":

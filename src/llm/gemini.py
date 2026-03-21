@@ -29,11 +29,11 @@ class GeminiProvider(LLMProvider):
         self._system_prompt = system_prompt
         self._history = []
 
-    def send(self, message: str) -> str:
+    def send(self, message: str, max_tokens: int = 512) -> str:
         self._history.append(Message(role=Role.USER, content=message))
 
         contents = self._build_contents()
-        response = self._generate(contents)
+        response = self._generate(contents, max_tokens=max_tokens)
 
         reply = response.text.strip()
         self._history.append(Message(role=Role.ASSISTANT, content=reply))
@@ -70,14 +70,14 @@ class GeminiProvider(LLMProvider):
             contents.append(types.Content(role=role, parts=[types.Part(text=msg.content)]))
         return contents
 
-    def _generate(self, contents: list[types.Content]) -> types.GenerateContentResponse:
+    def _generate(self, contents: list[types.Content], max_tokens: int = 512) -> types.GenerateContentResponse:
         return self._client.models.generate_content(
             model=self._model,
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=self._system_prompt,
                 temperature=0.7,
-                max_output_tokens=512,
+                max_output_tokens=max_tokens,
                 thinking_config=types.ThinkingConfig(thinking_budget=0),
             ),
         )
