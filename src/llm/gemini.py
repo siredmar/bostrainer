@@ -9,7 +9,7 @@ from .base import LLMProvider, Message, Role
 class GeminiProvider(LLMProvider):
     """Google Gemini LLM provider."""
 
-    def __init__(self, model: str = "gemini-2.0-flash") -> None:
+    def __init__(self, model: str = "gemini-2.5-flash") -> None:
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
             raise RuntimeError("GEMINI_API_KEY environment variable is not set")
@@ -36,7 +36,7 @@ class GeminiProvider(LLMProvider):
             config=types.GenerateContentConfig(
                 system_instruction=self._system_prompt,
                 temperature=0.7,
-                max_output_tokens=256,
+                max_output_tokens=512,
             ),
         )
 
