@@ -1,4 +1,4 @@
-from .base import LLMProvider, Message, Role
+from .base import LLMProvider, LLMResponse, Message, Role
 from .gemini import GeminiProvider
 
-__all__ = ["LLMProvider", "Message", "Role", "GeminiProvider"]
+__all__ = ["LLMProvider", "LLMResponse", "Message", "Role", "GeminiProvider"]

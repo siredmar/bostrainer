@@ -3,7 +3,14 @@ import os
 from google import genai
 from google.genai import types
 
-from .base import LLMProvider, Message, Role
+from .base import LLMProvider, LLMResponse, Message, Role
+
+AUDIO_INSTRUCTION = (
+    "Der Nutzer sendet dir eine Audio-Aufnahme eines BOS-Funkspruchs. "
+    "Antworte im folgenden Format:\n"
+    "TRANSKRIPT: <wortgetreue Transkription der Audio-Aufnahme>\n"
+    "ANTWORT: <deine Funk-Antwort>"
+)
 
 
 class GeminiProvider(LLMProvider):
@@ -25,12 +32,46 @@ class GeminiProvider(LLMProvider):
     def send(self, message: str) -> str:
         self._history.append(Message(role=Role.USER, content=message))
 
+        contents = self._build_contents()
+        response = self._generate(contents)
+
+        reply = response.text.strip()
+        self._history.append(Message(role=Role.ASSISTANT, content=reply))
+        return reply
+
+    def send_audio(self, wav_bytes: bytes) -> LLMResponse:
+        contents = self._build_contents()
+        contents.append(
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part(inline_data=types.Blob(mime_type="audio/wav", data=wav_bytes)),
+                    types.Part(text=AUDIO_INSTRUCTION),
+                ],
+            )
+        )
+
+        response = self._generate(contents)
+        raw = response.text.strip()
+
+        transcript, reply = self._parse_audio_response(raw)
+
+        self._history.append(Message(role=Role.USER, content=transcript))
+        self._history.append(Message(role=Role.ASSISTANT, content=reply))
+        return LLMResponse(transcript=transcript, reply=reply)
+
+    def reset(self) -> None:
+        self._history = []
+
+    def _build_contents(self) -> list[types.Content]:
         contents = []
         for msg in self._history:
             role = "user" if msg.role == Role.USER else "model"
             contents.append(types.Content(role=role, parts=[types.Part(text=msg.content)]))
+        return contents
 
-        response = self._client.models.generate_content(
+    def _generate(self, contents: list[types.Content]) -> types.GenerateContentResponse:
+        return self._client.models.generate_content(
             model=self._model,
             contents=contents,
             config=types.GenerateContentConfig(
@@ -41,9 +82,19 @@ class GeminiProvider(LLMProvider):
             ),
         )
 
-        reply = response.text.strip()
-        self._history.append(Message(role=Role.ASSISTANT, content=reply))
-        return reply
+    @staticmethod
+    def _parse_audio_response(raw: str) -> tuple[str, str]:
+        transcript = ""
+        reply = raw
 
-    def reset(self) -> None:
-        self._history = []
+        for line in raw.splitlines():
+            upper = line.strip().upper()
+            if upper.startswith("TRANSKRIPT:"):
+                transcript = line.split(":", 1)[1].strip()
+            elif upper.startswith("ANTWORT:"):
+                reply = line.split(":", 1)[1].strip()
+
+        if not transcript:
+            transcript = "(nicht erkannt)"
+
+        return transcript, reply

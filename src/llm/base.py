@@ -15,6 +15,12 @@ class Message:
     content: str
 
 
+@dataclass
+class LLMResponse:
+    transcript: str
+    reply: str
+
+
 class LLMProvider(ABC):
     """Abstract base class for LLM providers."""
 
@@ -26,6 +32,14 @@ class LLMProvider(ABC):
     @abstractmethod
     def send(self, message: str) -> str:
         """Send a user message and return the assistant's response.
+
+        The provider is responsible for maintaining conversation history.
+        """
+        ...
+
+    @abstractmethod
+    def send_audio(self, wav_bytes: bytes) -> LLMResponse:
+        """Send audio and return transcript + response in one call.
 
         The provider is responsible for maintaining conversation history.
         """

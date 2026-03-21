@@ -4,7 +4,6 @@ from pathlib import Path
 
 from audio import play_wav, record_until_release
 from llm import GeminiProvider
-from stt import SpeechToText
 from tts import TextToSpeech
 
 PROMPT_FILE = Path(__file__).parent.parent / "prompts" / "system_prompt.txt"
@@ -19,7 +18,6 @@ def main() -> None:
     llm = GeminiProvider()
     llm.setup(system_prompt)
 
-    stt = SpeechToText()
     tts = TextToSpeech()
 
     print()
@@ -45,24 +43,20 @@ def main() -> None:
             print("   Keine Aufnahme erkannt.\n")
             continue
 
-        print("   🔄 Transkribiere...")
-        user_text = stt.transcribe(wav_bytes)
-        if not user_text:
-            print("   Kein Text erkannt.\n")
-            continue
+        print("   🔄 Verarbeite Funkspruch...")
+        result = llm.send_audio(wav_bytes)
 
-        print(f"   📝 Du: {user_text}")
-        transcript_log.append({"role": "user", "text": user_text})
+        print(f"   📝 Du: {result.transcript}")
+        transcript_log.append({"role": "user", "text": result.transcript})
 
         delay = random.uniform(1.0, 4.0)
         print(f"   ⏳ Funkverkehr... ({delay:.1f}s)")
         time.sleep(delay)
 
-        response = llm.send(user_text)
-        print(f"   📻 Leitstelle: {response}")
-        transcript_log.append({"role": "leitstelle", "text": response})
+        print(f"   📻 Leitstelle: {result.reply}")
+        transcript_log.append({"role": "leitstelle", "text": result.reply})
 
-        response_wav = tts.synthesize(response)
+        response_wav = tts.synthesize(result.reply)
         play_wav(response_wav)
         print()
 
