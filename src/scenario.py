@@ -12,6 +12,8 @@ class Scenario:
     user_role: str
     ai_role: str
     prompt_file: str
+    briefing: str
+    first_message_hint: str
 
     def load_prompt(self) -> str:
         base_rules = (PROMPTS_DIR / "base_rules.txt").read_text(encoding="utf-8")
@@ -27,6 +29,16 @@ SCENARIOS = [
         user_role="Florian Birkach 47/1 (Gruppenführer MLF)",
         ai_role="Leitstelle Roth",
         prompt_file="leitstelle.txt",
+        briefing=(
+            "B3 – Scheunenbrand in Birkach, Hauptstraße 12.\n"
+            "Du wurdest alarmiert und sitzt im MLF.\n"
+            "Deine Aufgabe: Melde dich bei der Leitstelle, fahre zur Einsatzstelle,\n"
+            "gib eine Lagemeldung ab und führe den Einsatz durch."
+        ),
+        first_message_hint=(
+            '💡 Erster Funkspruch z.B.:\n'
+            '   "Leitstelle Roth von Florian Birkach 47/1, sind ausgerückt mit Staffelbesatzung, kommen"'
+        ),
     ),
     Scenario(
         key="2",
@@ -35,6 +47,16 @@ SCENARIOS = [
         user_role="Florian Birkach 47/1 (Gruppenführer MLF)",
         ai_role="Florian Birkach 10/1 (Einsatzleiter)",
         prompt_file="einsatzleiter.txt",
+        briefing=(
+            "B3 – Scheunenbrand in Birkach, Hauptstraße 12.\n"
+            "Du bist mit deinem MLF an der Einsatzstelle eingetroffen.\n"
+            "Der Einsatzleiter (KdoW) ist bereits vor Ort und gibt dir Aufträge.\n"
+            "Deine Aufgabe: Melde dich beim Einsatzleiter und führe seine Befehle aus."
+        ),
+        first_message_hint=(
+            '💡 Erster Funkspruch z.B.:\n'
+            '   "Florian Birkach 10/1 von Florian Birkach 47/1, sind an der Einsatzstelle, melde mich einsatzbereit, kommen"'
+        ),
     ),
     Scenario(
         key="3",
@@ -43,6 +65,16 @@ SCENARIOS = [
         user_role="Florian Birkach 47/1-1 (Gruppenführer)",
         ai_role="Angriffstrupp / Wassertrupp",
         prompt_file="trupp.txt",
+        briefing=(
+            "B3 – Scheunenbrand in Birkach, Hauptstraße 12.\n"
+            "Du bist Gruppenführer und deine Trupps sind bereit.\n"
+            "Deine Aufgabe: Gib dem Angriffstrupp einen Einsatzbefehl\n"
+            "(z.B. Innenangriff, Menschenrettung) und koordiniere den Einsatz."
+        ),
+        first_message_hint=(
+            '💡 Erster Funkspruch z.B.:\n'
+            '   "Angriffstrupp von Florian Birkach 47/1-1, Auftrag: Innenangriff über den Haupteingang, ein C-Rohr, kommen"'
+        ),
     ),
 ]
 
