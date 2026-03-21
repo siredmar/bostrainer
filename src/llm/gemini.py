@@ -37,6 +37,7 @@ class GeminiProvider(LLMProvider):
                 system_instruction=self._system_prompt,
                 temperature=0.7,
                 max_output_tokens=512,
+                thinking_config=types.ThinkingConfig(thinking_budget=0),
             ),
         )
 
