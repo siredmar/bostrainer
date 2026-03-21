@@ -1,37 +1,34 @@
+import asyncio
 import io
+import subprocess
 import wave
 from pathlib import Path
 
-from piper import PiperVoice
-
-DEFAULT_MODEL = Path(__file__).parent.parent / "models" / "piper" / "de_DE-thorsten_emotional-medium.onnx"
+import edge_tts
 
 
 class TextToSpeech:
-    """Text-to-speech using Piper."""
+    """Text-to-speech using Microsoft Edge TTS (high quality, free)."""
 
-    def __init__(self, model_path: str | Path = DEFAULT_MODEL) -> None:
-        print(f"   Lade Piper-Modell...")
-        self._voice = PiperVoice.load(str(model_path))
-        self._sample_rate = self._voice.config.sample_rate
-        print(f"   Piper-Modell geladen (sample_rate={self._sample_rate}).")
+    def __init__(self, voice: str = "de-DE-ConradNeural") -> None:
+        self._voice = voice
+        print(f"   TTS bereit (Edge TTS, Stimme: {voice})")
 
     def synthesize(self, text: str) -> bytes:
         """Synthesize text to WAV bytes."""
-        audio_chunks: list[bytes] = []
-        sample_width = 2
-        channels = 1
+        return asyncio.run(self._synthesize_async(text))
 
-        for chunk in self._voice.synthesize(text):
-            audio_chunks.append(chunk.audio_int16_bytes)
-            sample_width = chunk.sample_width
-            channels = chunk.sample_channels
+    async def _synthesize_async(self, text: str) -> bytes:
+        comm = edge_tts.Communicate(text, voice=self._voice)
 
-        buf = io.BytesIO()
-        wf = wave.open(buf, "wb")
-        wf.setnchannels(channels)
-        wf.setsampwidth(sample_width)
-        wf.setframerate(self._sample_rate)
-        wf.writeframes(b"".join(audio_chunks))
-        wf.close()
-        return buf.getvalue()
+        mp3_data = b""
+        async for chunk in comm.stream():
+            if chunk["type"] == "audio":
+                mp3_data += chunk["data"]
+
+        proc = subprocess.run(
+            ["ffmpeg", "-i", "pipe:0", "-f", "wav", "-ar", "16000", "-ac", "1", "-loglevel", "quiet", "pipe:1"],
+            input=mp3_data,
+            capture_output=True,
+        )
+        return proc.stdout
