@@ -57,7 +57,8 @@ def main() -> None:
         print(f"   📝 Du: {result.transcript}")
         transcript_log.append({"role": "user", "text": result.transcript})
 
-        if "ende" in result.transcript.lower().split():
+        last_word = result.transcript.strip().rstrip(".!?,;").split()[-1].lower() if result.transcript.strip() else ""
+        if last_word == "ende":
             print("   📻 Funkverkehr beendet (Ende)")
             break
 
