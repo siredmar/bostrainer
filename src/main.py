@@ -1,18 +1,18 @@
 import random
 import time
-from pathlib import Path
 
 from audio import play_wav, record_until_release
 from llm import GeminiProvider
+from scenario import select_scenario
 from tts import TextToSpeech
-
-PROMPT_FILE = Path(__file__).parent.parent / "prompts" / "system_prompt.txt"
 
 
 def main() -> None:
-    system_prompt = PROMPT_FILE.read_text(encoding="utf-8")
+    print("=== BOS-Funk Trainer ===\n")
 
-    print("=== BOS-Funk Trainer ===")
+    scenario = select_scenario()
+    system_prompt = scenario.load_prompt()
+
     print("Komponenten werden geladen...\n")
 
     llm = GeminiProvider()
@@ -21,9 +21,9 @@ def main() -> None:
     tts = TextToSpeech()
 
     print()
-    print("Szenario: B3 Scheunenbrand, Birkach Hauptstraße 12")
-    print("Du bist: Florian Birkach 47/1 (MLF)")
-    print("Gegenstelle: Leitstelle (Florian Roth)")
+    print(f"Szenario: {scenario.name}")
+    print(f"Du bist: {scenario.user_role}")
+    print(f"Gegenstelle: {scenario.ai_role}")
     print()
     print("Enter drücken → Aufnahme startet")
     print("Enter drücken → Aufnahme stoppt, Funkspruch wird verarbeitet")
@@ -49,7 +49,6 @@ def main() -> None:
         print(f"   📝 Du: {result.transcript}")
         transcript_log.append({"role": "user", "text": result.transcript})
 
-        # "Ende" beendet das Szenario ohne weitere Antwort
         if "ende" in result.transcript.lower().split():
             print("   📻 Funkverkehr beendet (Ende)")
             break
@@ -58,8 +57,8 @@ def main() -> None:
         print(f"   ⏳ Funkverkehr... ({delay:.1f}s)")
         time.sleep(delay)
 
-        print(f"   📻 Leitstelle: {result.reply}")
-        transcript_log.append({"role": "leitstelle", "text": result.reply})
+        print(f"   📻 {scenario.ai_role}: {result.reply}")
+        transcript_log.append({"role": "gegenstelle", "text": result.reply})
 
         response_wav = tts.synthesize(result.reply)
         play_wav(response_wav)
@@ -69,7 +68,7 @@ def main() -> None:
     if transcript_log:
         print("\nProtokoll:")
         for i, entry in enumerate(transcript_log, 1):
-            role = "DU" if entry["role"] == "user" else "LEITSTELLE"
+            role = "DU" if entry["role"] == "user" else scenario.ai_role.upper()
             print(f"  {i:2d}. [{role}] {entry['text']}")
 
 
