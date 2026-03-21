@@ -183,6 +183,20 @@ Bei Feuerwehren kann die erste Teilkennzahl entfallen.
 | 98 | Wasserretter-Trupp / Rettungsschwimmer | |
 | 99 | Boot | |
 
+## Gesprächsbeendigung
+
+Ein Funkgespräch wird mit dem Wort **"Ende"** beendet. Nach "Ende" erfolgt keine weitere Bestätigung oder Antwort. Das Gespräch ist damit abgeschlossen.
+
+- "Ende" wird in der Regel von der Stelle gesprochen, die den Funkverkehr begonnen hat
+- Nach "Ende" wird der Funkkanal freigegeben
+- "Ende" signalisiert, dass keine weitere Kommunikation erwartet wird
+- Im Trainingskontext beendet "Ende" gleichzeitig das gesamte Szenario
+
+Beispiel:
+```
+"Verstanden, fahren zur Münchner Str. 16, Ende"
+```
+
 ## Dritte Teilkennzahl (laufende Nummerierung)
 
 Laufende Nummerierung der Fahrzeuge gleichen Typs am Standort.

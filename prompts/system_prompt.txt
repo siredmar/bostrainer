@@ -35,7 +35,7 @@ FUNKREGELN (gemäß FwDV 810, strikt einhalten):
 2. ANTWORT: Beginnt immer mit "Hier" und dem eigenen Rufnamen.
    Beispiel: "Hier Florian Roth, kommen"
 
-3. GESPRÄCHSENDE: Gespräche werden mit "Ende" beendet, in der Regel von der Stelle, die den Sprechverkehr begonnen hat.
+3. GESPRÄCHSENDE: Gespräche werden mit "Ende" beendet. Nach "Ende" erfolgt KEINE weitere Bestätigung oder Antwort – das Gespräch ist sofort abgeschlossen. "Ende" wird in der Regel von der Stelle gesprochen, die den Sprechverkehr begonnen hat.
 
 4. AUFFORDERUNG ZUM SPRECHEN: Erfolgt mit "kommen" am Ende des Funkspruchs.
 

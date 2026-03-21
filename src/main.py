@@ -49,6 +49,11 @@ def main() -> None:
         print(f"   📝 Du: {result.transcript}")
         transcript_log.append({"role": "user", "text": result.transcript})
 
+        # "Ende" beendet das Szenario ohne weitere Antwort
+        if "ende" in result.transcript.lower().split():
+            print("   📻 Funkverkehr beendet (Ende)")
+            break
+
         delay = random.uniform(1.0, 4.0)
         print(f"   ⏳ Funkverkehr... ({delay:.1f}s)")
         time.sleep(delay)
