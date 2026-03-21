@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import random
+from dataclasses import dataclass, field
 from pathlib import Path
 
 PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
@@ -14,11 +15,25 @@ class Scenario:
     prompt_file: str
     briefing: str
     first_message_hint: str
+    variant_files: list[str] = field(default_factory=list)
 
     def load_prompt(self) -> str:
         base_rules = (PROMPTS_DIR / "base_rules.txt").read_text(encoding="utf-8")
         scenario_prompt = (PROMPTS_DIR / "scenarios" / self.prompt_file).read_text(encoding="utf-8")
+
+        if self.variant_files:
+            variant_file = random.choice(self.variant_files)
+            variant_prompt = (PROMPTS_DIR / "scenarios" / variant_file).read_text(encoding="utf-8")
+            return scenario_prompt + "\n\n" + variant_prompt + "\n\n" + base_rules
+        
         return scenario_prompt + "\n\n" + base_rules
+
+    def get_variant_name(self, prompt: str) -> str | None:
+        """Extract the scenario name from a loaded prompt (first EINSATZ: line)."""
+        for line in prompt.splitlines():
+            if line.startswith("EINSATZ:"):
+                return line.split(":", 1)[1].strip()
+        return None
 
 
 SCENARIOS = [
@@ -79,26 +94,28 @@ SCENARIOS = [
     Scenario(
         key="4",
         name="Truppführer ↔ Gruppenführer (Atemschutzeinsatz)",
-        description="Du bist Angriffstruppführer unter Atemschutz und meldest dem Gruppenführer",
+        description="Du bist Angriffstruppführer unter Atemschutz – zufälliges Einsatzszenario",
         user_role="Angriffstrupp (Florian Birkach 47/1-2)",
         ai_role="Florian Birkach 47/1-1 (Gruppenführer)",
-        prompt_file="truppfuehrer.txt",
-        briefing=(
-            "B3 – Scheunenbrand in Birkach, Hauptstraße 12.\n"
-            "Du bist Angriffstruppführer und wurdest gerade unter Atemschutz\n"
-            "an der Atemschutzüberwachung angemeldet. Dein Trupp ist einsatzbereit.\n"
-            "Deine Aufgabe: Melde dich beim Gruppenführer, nimm den Einsatzauftrag\n"
-            "entgegen und melde regelmäßig deine Lage (Sicht, Temperatur, Brandherd, Flaschendruck)."
-        ),
+        prompt_file="truppfuehrer_base.txt",
+        briefing="",  # wird dynamisch gesetzt
         first_message_hint=(
             '💡 Erster Funkspruch z.B.:\n'
             '   "Florian Birkach 47/1-1 von Angriffstrupp, unter Atemschutz angemeldet, einsatzbereit, kommen"'
         ),
+        variant_files=[
+            "truppfuehrer_scheunenbrand.txt",
+            "truppfuehrer_kellerbrand.txt",
+            "truppfuehrer_zimmerbrand.txt",
+            "truppfuehrer_dachstuhl.txt",
+            "truppfuehrer_tiefgarage.txt",
+        ],
     ),
 ]
 
 
-def select_scenario() -> Scenario:
+def select_scenario() -> tuple[Scenario, str]:
+    """Select a scenario and return (scenario, loaded_prompt)."""
     print("=== Szenario auswählen ===\n")
     for s in SCENARIOS:
         print(f"  [{s.key}] {s.name}")
@@ -112,5 +129,6 @@ def select_scenario() -> Scenario:
         choice = input(f"Szenario wählen ({keys}): ").strip()
         for s in SCENARIOS:
             if s.key == choice:
-                return s
+                prompt = s.load_prompt()
+                return s, prompt
         print(f"Ungültige Auswahl, bitte {keys} eingeben.")

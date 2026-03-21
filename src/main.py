@@ -10,8 +10,7 @@ from tts import TextToSpeech
 def main() -> None:
     print("=== BOS-Funk Trainer ===\n")
 
-    scenario = select_scenario()
-    system_prompt = scenario.load_prompt()
+    scenario, system_prompt = select_scenario()
 
     print("Komponenten werden geladen...\n")
 
@@ -20,12 +19,19 @@ def main() -> None:
 
     tts = TextToSpeech()
 
+    # Dynamisches Briefing für Szenarien mit Varianten
+    briefing = scenario.briefing
+    if not briefing:
+        variant_name = scenario.get_variant_name(system_prompt)
+        if variant_name:
+            briefing = f"Einsatz: {variant_name}\nDein Trupp ist unter Atemschutz angemeldet und einsatzbereit."
+
     print()
     print("=" * 50)
     print(f"📋 EINSATZBRIEFING: {scenario.name}")
     print("=" * 50)
     print()
-    print(scenario.briefing)
+    print(briefing)
     print()
     print(f"  Du bist:      {scenario.user_role}")
     print(f"  Gegenstelle:  {scenario.ai_role}")
