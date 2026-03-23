@@ -44,7 +44,7 @@ func (g *GeminiTTS) Name() string {
 func (g *GeminiTTS) Synthesize(text string) ([]byte, error) {
 	// Prepare text for TTS (convert vehicle IDs like 47/1 to "47 1")
 	text = PrepareTTSText(text)
-	
+
 	pcmData, err := g.generatePCM(text)
 	if err != nil {
 		return nil, err

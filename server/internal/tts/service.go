@@ -40,14 +40,14 @@ func PrepareTTSText(text string) string {
 	// Pattern for vehicle identifiers: number/number or number/number-number
 	// Examples: 47/1, 47/1-1, 83/1, 10/43-1
 	re := regexp.MustCompile(`(\d+)/(\d+)(?:-(\d+))?`)
-	
+
 	result := re.ReplaceAllStringFunc(text, func(match string) string {
 		// Replace / and - with spaces for natural speech
 		replaced := strings.ReplaceAll(match, "/", " ")
 		replaced = strings.ReplaceAll(replaced, "-", " ")
 		return replaced
 	})
-	
+
 	// Fix compound word pronunciation (TTS says "schtrupp" instead of "trupp")
 	// Insert a slight pause via hyphen to help TTS pronounce correctly
 	for _, pair := range ttsPronunciationFixes {
@@ -59,7 +59,7 @@ func PrepareTTSText(text string) string {
 		titleRepl := strings.ToUpper(pair[1][:1]) + pair[1][1:]
 		result = strings.ReplaceAll(result, titleCase, titleRepl)
 	}
-	
+
 	return result
 }
 
@@ -98,8 +98,8 @@ func pcmToWAV(pcm []byte, sampleRate, channels, bitsPerSample int) []byte {
 
 	// fmt chunk
 	buf.WriteString("fmt ")
-	binary.Write(buf, binary.LittleEndian, uint32(16))          // chunk size
-	binary.Write(buf, binary.LittleEndian, uint16(1))           // audio format (PCM)
+	binary.Write(buf, binary.LittleEndian, uint32(16)) // chunk size
+	binary.Write(buf, binary.LittleEndian, uint16(1))  // audio format (PCM)
 	binary.Write(buf, binary.LittleEndian, uint16(channels))
 	binary.Write(buf, binary.LittleEndian, uint32(sampleRate))
 	binary.Write(buf, binary.LittleEndian, uint32(byteRate))

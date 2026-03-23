@@ -35,10 +35,10 @@ func (e *EdgeTTS) Name() string {
 func (e *EdgeTTS) Synthesize(text string) ([]byte, error) {
 	// Prepare text for TTS (convert vehicle IDs like 47/1 to "47 1")
 	text = PrepareTTSText(text)
-	
+
 	// Split long text into chunks (Google TTS has a limit of ~200 chars)
 	chunks := splitText(text, 200)
-	
+
 	var allAudio []byte
 	for _, chunk := range chunks {
 		audio, err := e.synthesizeChunk(chunk)
@@ -47,7 +47,7 @@ func (e *EdgeTTS) Synthesize(text string) ([]byte, error) {
 		}
 		allAudio = append(allAudio, audio...)
 	}
-	
+
 	return allAudio, nil
 }
 
@@ -124,8 +124,8 @@ func splitText(text string, maxLen int) []string {
 
 // GermanVoices - for API compatibility
 var GermanVoices = map[string]string{
-	"conrad":    "de-DE-ConradNeural",
-	"katja":     "de-DE-KatjaNeural",
+	"conrad": "de-DE-ConradNeural",
+	"katja":  "de-DE-KatjaNeural",
 }
 
 // SetVoice - for API compatibility (Google Translate TTS has no voice selection)

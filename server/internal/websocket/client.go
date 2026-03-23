@@ -88,21 +88,21 @@ type IncomingMessage struct {
 
 // OutgoingMessage represents a message to the client.
 type OutgoingMessage struct {
-	Type       string `json:"type"`
-	Briefing   string `json:"briefing,omitempty"`
-	UserRole   string `json:"user_role,omitempty"`
-	AIRole     string `json:"ai_role,omitempty"`
-	FirstHint  string `json:"first_hint,omitempty"`
-	Transcript string `json:"transcript,omitempty"`
-	Reply      string `json:"reply,omitempty"`
-	Audio      string `json:"audio,omitempty"` // base64 audio
-	Analysis   string `json:"analysis,omitempty"`
+	Type       string            `json:"type"`
+	Briefing   string            `json:"briefing,omitempty"`
+	UserRole   string            `json:"user_role,omitempty"`
+	AIRole     string            `json:"ai_role,omitempty"`
+	FirstHint  string            `json:"first_hint,omitempty"`
+	Transcript string            `json:"transcript,omitempty"`
+	Reply      string            `json:"reply,omitempty"`
+	Audio      string            `json:"audio,omitempty"` // base64 audio
+	Analysis   string            `json:"analysis,omitempty"`
 	Evaluation *EvaluationResult `json:"evaluation,omitempty"` // Structured evaluation
-	Message    string `json:"message,omitempty"`
-	Status     string `json:"status,omitempty"`     // Current server status
-	Progress   string `json:"progress,omitempty"`   // Progress info (e.g., "3/12")
-	Scenarios  []ScenarioInfo `json:"scenarios,omitempty"`
-	DemoLines  []DemoLine `json:"demo_lines,omitempty"`
+	Message    string            `json:"message,omitempty"`
+	Status     string            `json:"status,omitempty"`   // Current server status
+	Progress   string            `json:"progress,omitempty"` // Progress info (e.g., "3/12")
+	Scenarios  []ScenarioInfo    `json:"scenarios,omitempty"`
+	DemoLines  []DemoLine        `json:"demo_lines,omitempty"`
 }
 
 // sendStatus sends a status update to the client.
@@ -377,16 +377,16 @@ WICHTIG - Funkprotokoll (STRIKT EINHALTEN):
 	// Parse dialogue lines and generate TTS for each
 	lines := c.parseDemoDialogue(dialogueText)
 	log.Printf("Parsed %d demo lines", len(lines))
-	
+
 	totalLines := len(lines)
 	c.sendStatus(fmt.Sprintf("Dialog generiert: %d Funksprüche", totalLines), "")
 
 	// Send each line with TTS audio
 	for i, line := range lines {
 		log.Printf("Demo line %d: [%s] %s", i, line.Speaker, line.Text)
-		
+
 		c.sendStatus(fmt.Sprintf("TTS: %s", line.Speaker), fmt.Sprintf("%d/%d", i+1, totalLines))
-		
+
 		audio, err := c.ttsProvider.Synthesize(line.Text)
 		if err != nil {
 			log.Printf("TTS error for line %d: %v", i, err)
@@ -428,7 +428,7 @@ func (c *Client) parseDemoDialogue(text string) []DemoLine {
 			text := strings.TrimSpace(line[idx+1:])
 			speakerUpper := strings.ToUpper(speaker)
 			// Accept lines with radio callsigns (Florian, Rotkreuz, etc.)
-			if text != "" && (strings.HasPrefix(speakerUpper, "FLORIAN") || 
+			if text != "" && (strings.HasPrefix(speakerUpper, "FLORIAN") ||
 				strings.HasPrefix(speakerUpper, "ROTKREUZ") ||
 				strings.HasPrefix(speakerUpper, "PELIKAN") ||
 				strings.HasPrefix(speakerUpper, "KATER") ||
@@ -526,9 +526,9 @@ func (c *Client) handleAudio(base64Audio string) {
 		Reply:      resp.Reply,
 		Audio:      base64.StdEncoding.EncodeToString(ttsAudio),
 	})
-	
+
 	log.Printf("[%s] Response sent to client", c.id)
-	
+
 	// Check if conversation ended with "Ende"
 	c.checkForEnde(resp.Reply)
 }
@@ -617,21 +617,21 @@ func (c *Client) handleTextSimulation(text string) {
 func (c *Client) containsEnde(text string) bool {
 	text = strings.TrimSpace(text)
 	text = strings.ToLower(text)
-	
+
 	// Remove trailing punctuation for cleaner matching
 	text = strings.TrimRight(text, ".!?,;:")
-	
+
 	// Common STT transcriptions of "Ende"
 	endeVariants := []string{
 		"ende",
-		"ente",      // Common mishearing
-		"ände",      // Accent variation
-		"and",       // English mishearing
-		"end",       // English
-		"ender",     // Sometimes adds syllable
-		"enden",     // Verb form
+		"ente",  // Common mishearing
+		"ände",  // Accent variation
+		"and",   // English mishearing
+		"end",   // English
+		"ender", // Sometimes adds syllable
+		"enden", // Verb form
 	}
-	
+
 	for _, variant := range endeVariants {
 		// Check if text ends with the variant
 		if strings.HasSuffix(text, variant) {
@@ -642,7 +642,7 @@ func (c *Client) containsEnde(text string) bool {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -693,11 +693,11 @@ func (c *Client) handleEndSession() {
 	startTime := time.Now()
 	evalResult := c.generateStructuredEvaluation()
 	log.Printf("[%s] Evaluation generated in %v", c.id, time.Since(startTime))
-	
+
 	// Stop the heartbeat
 	close(done)
-	
-	log.Printf("[%s] Sending evaluation to client (messages: %d, score: %d%%)", 
+
+	log.Printf("[%s] Sending evaluation to client (messages: %d, score: %d%%)",
 		c.id, len(evalResult.Messages), evalResult.OverallScore)
 	c.sendJSON(OutgoingMessage{
 		Type:       "evaluation",
@@ -815,10 +815,10 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen.`
 
 	// Try to parse JSON response
 	var evalResult EvaluationResult
-	
+
 	// Clean up response - extract JSON from markdown code blocks if present
 	cleanedResponse := response
-	
+
 	// Try to extract JSON from ```json ... ``` block
 	if idx := strings.Index(cleanedResponse, "```json"); idx != -1 {
 		cleanedResponse = cleanedResponse[idx+7:]
@@ -832,7 +832,7 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen.`
 			cleanedResponse = cleanedResponse[:endIdx]
 		}
 	}
-	
+
 	// Also try to find JSON by looking for opening brace
 	if startIdx := strings.Index(cleanedResponse, "{"); startIdx != -1 {
 		// Find matching closing brace
@@ -853,14 +853,14 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen.`
 			cleanedResponse = cleanedResponse[startIdx:endIdx]
 		}
 	}
-	
+
 	cleanedResponse = strings.TrimSpace(cleanedResponse)
 	log.Printf("[%s] Cleaned JSON response (first 500 chars): %.500s", c.id, cleanedResponse)
-	
+
 	if err := json.Unmarshal([]byte(cleanedResponse), &evalResult); err != nil {
 		log.Printf("[%s] Failed to parse evaluation JSON: %v", c.id, err)
 		log.Printf("[%s] Raw response: %s", c.id, response)
-		
+
 		// Fallback: Create basic evaluation from user messages
 		messages := make([]MessageScore, len(userMessages))
 		for i, msg := range userMessages {
@@ -882,9 +882,9 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen.`
 		}
 	}
 
-	log.Printf("[%s] Evaluation parsed successfully: %d messages, overall score: %d%%", 
+	log.Printf("[%s] Evaluation parsed successfully: %d messages, overall score: %d%%",
 		c.id, len(evalResult.Messages), evalResult.OverallScore)
-	
+
 	return &evalResult
 }
 

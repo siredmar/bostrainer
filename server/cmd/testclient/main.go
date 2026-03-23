@@ -228,7 +228,7 @@ func main() {
 }
 
 func printHelp() {
-	fmt.Println(`
+	fmt.Print(`
 Commands:
   list, ls           - List scenarios (received on connect)
   start <key>        - Start a training session
@@ -243,6 +243,7 @@ Example:
   demo demo1
   end
 `)
+
 }
 
 func sendMessage(conn *websocket.Conn, msg IncomingMessage) {
@@ -319,7 +320,7 @@ func handleMessage(data []byte) {
 		if msg.Evaluation != nil {
 			fmt.Printf("\n📊 GESAMTSCORE: %d%%\n", msg.Evaluation.OverallScore)
 			fmt.Printf("📝 %s\n", msg.Evaluation.Summary)
-			
+
 			if len(msg.Evaluation.Messages) > 0 {
 				fmt.Println("\n--- Funksprüche ---")
 				for _, m := range msg.Evaluation.Messages {
@@ -338,7 +339,7 @@ func handleMessage(data []byte) {
 					}
 				}
 			}
-			
+
 			if len(msg.Evaluation.Tips) > 0 {
 				fmt.Println("\n--- Tipps ---")
 				for i, tip := range msg.Evaluation.Tips {
