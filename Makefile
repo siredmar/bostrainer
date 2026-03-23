@@ -50,7 +50,10 @@ tidy: ## Tidy go.mod
 # ── Docker ─────────────────────────────────────────────────────────
 
 docker-build: ## Build Docker image
-	docker build -f $(SERVER_DIR)/Dockerfile -t bostrainer .
+	docker build -f $(SERVER_DIR)/Dockerfile -t siredmar/bostrainer .
+
+docker-push: ## Push the docker image
+	docker push siredmar/bostrainer
 
 docker-up: ## Start via docker-compose (foreground)
 	docker-compose up --build
@@ -66,4 +69,4 @@ docker-logs: ## Tail docker-compose logs
 
 docker-clean: docker-down ## Stop and remove volumes
 	docker-compose down -v
-	docker rmi bostrainer 2>/dev/null || true
+	docker rmi siredamr/bostrainer 2>/dev/null || true
