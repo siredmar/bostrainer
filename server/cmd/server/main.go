@@ -8,7 +8,6 @@ import (
 
 	"github.com/siredmar/bostrainer/server/internal/gemini"
 	"github.com/siredmar/bostrainer/server/internal/scenario"
-	"github.com/siredmar/bostrainer/server/internal/tlscert"
 	"github.com/siredmar/bostrainer/server/internal/tts"
 	"github.com/siredmar/bostrainer/server/internal/websocket"
 )
@@ -58,31 +57,8 @@ func main() {
 		websocket.ServeWs(hub, geminiClient, ttsProvider, scenarioLoader, w, r)
 	})
 
-	// TLS setup: generate self-signed cert for HTTPS (required for microphone on non-localhost)
-	certDir := os.Getenv("CERT_DIR")
-	if certDir == "" {
-		certDir = filepath.Join("..", ".certs")
-	}
-
-	tlsConfig, err := tlscert.GenerateOrLoad(certDir)
-	if err != nil {
-		log.Printf("TLS setup failed: %v – falling back to HTTP", err)
-		log.Printf("⚠️  Microphone access will only work on localhost!")
-		log.Printf("Server starting on http://localhost:%s", port)
-		if err := http.ListenAndServe(":"+port, nil); err != nil {
-			log.Fatal("ListenAndServe: ", err)
-		}
-		return
-	}
-
-	server := &http.Server{
-		Addr:      ":" + port,
-		TLSConfig: tlsConfig,
-	}
-
-	log.Printf("Server starting on https://localhost:%s (HTTPS)", port)
-	log.Printf("📱 Smartphone: Open https://<your-ip>:%s and accept the certificate warning", port)
-	if err := server.ListenAndServeTLS("", ""); err != nil {
-		log.Fatal("ListenAndServeTLS: ", err)
+	log.Printf("Server starting on http://localhost:%s", port)
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
+		log.Fatal("ListenAndServe: ", err)
 	}
 }

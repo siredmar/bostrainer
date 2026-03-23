@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"unicode"
 )
 
 // Provider defines the TTS interface.
@@ -33,10 +34,36 @@ func NewProvider() (Provider, error) {
 	}
 }
 
+// sanitizeForTTS removes characters that cause TTS APIs to return errors.
+// Strips control characters, markdown formatting, and other non-speech content.
+func sanitizeForTTS(text string) string {
+	// Remove markdown formatting (bold, italic, headers, etc.)
+	text = regexp.MustCompile(`[*_#~` + "`" + `]+`).ReplaceAllString(text, "")
+
+	// Remove control characters (ASCII 0-31 except tab, newline, carriage return)
+	text = strings.Map(func(r rune) rune {
+		if r == '\t' || r == '\n' || r == '\r' {
+			return ' '
+		}
+		if unicode.IsControl(r) {
+			return -1
+		}
+		return r
+	}, text)
+
+	// Collapse multiple spaces
+	text = regexp.MustCompile(`\s{2,}`).ReplaceAllString(text, " ")
+
+	return strings.TrimSpace(text)
+}
+
 // PrepareTTSText prepares text for TTS by converting radio call signs
 // like "47/1" or "47/1-1" to spoken form "47 1" or "47 1 1".
 // Also fixes pronunciation of compound words that TTS engines struggle with.
 func PrepareTTSText(text string) string {
+	// Remove characters that cause TTS APIs to return 400 errors
+	text = sanitizeForTTS(text)
+
 	// Pattern for vehicle identifiers: number/number or number/number-number
 	// Examples: 47/1, 47/1-1, 83/1, 10/43-1
 	re := regexp.MustCompile(`(\d+)/(\d+)(?:-(\d+))?`)
