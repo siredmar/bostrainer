@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BOS-Funk Trainer</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🚒 BOS-Funk Trainer</h1>
+            <h1 id="header-title" class="clickable">🚒 BOS-Funk Trainer</h1>
         </header>
+
+        <!-- Back button (hidden on main menu) -->
+        <button id="back-button" class="back-button hidden">← Zurück zur Übersicht</button>
 
         <!-- Scenario Selection -->
         <section id="scenario-selection" class="card">
@@ -52,12 +55,13 @@
             <div id="status" class="status">Bereit</div>
         </section>
 
-        <!-- Evaluation (hidden initially) -->
+        <!-- Evaluation (hidden - now shown inline in transcript) -->
         <section id="evaluation-section" class="card hidden">
-            <h2>🔍 Auswertung</h2>
             <div id="evaluation-content"></div>
-            <button id="restart-button" class="restart-button">Neues Training</button>
         </section>
+
+        <!-- Hidden restart trigger for inline evaluation button -->
+        <button id="restart-trigger" class="hidden" style="display:none"></button>
 
         <!-- Connection Status -->
         <div id="connection-status" class="connection-status disconnected">
@@ -66,6 +70,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=8"></script>
 </body>
 </html>

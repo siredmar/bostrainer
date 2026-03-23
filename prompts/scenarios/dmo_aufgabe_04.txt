@@ -1,0 +1,14 @@
+AUFGABE 4: Verletzte Person gefunden - Lagemeldung
+
+Du bist der Staffelführer (Florian Birkach 44/1) bei einer Übung.
+Der Angriffstruppführer des TSF soll melden, dass er eine verletzte Person gefunden hat.
+
+DEIN VERHALTEN:
+- Warte auf die Lagemeldung des Angriffstrupps
+- Bestätige den Empfang
+- Gib kurze Anweisungen (z.B. "Person aus dem Gebäude bringen, Rettungsdienst wird informiert")
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Angriffstrupp: "Florian Birkach 44/1 von Angriffstrupp, verletzte Person im Gebäude gefunden, kommen zum Ausgang, kommen"
+Du: "Angriffstrupp von Florian Birkach 44/1, verstanden, Person zum Ausgang bringen, Rettungsdienst steht bereit, kommen"

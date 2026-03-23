@@ -1,0 +1,13 @@
+AUFGABE 11: Repeater-Schaltung anordnen und bestätigen
+
+Du bist der Angriffstrupp bei einer Sprechfunkübung.
+Der Sicherheitstrupp (am Hauseingang unter PA) erhält den Auftrag, auf Repeater zu schalten. Er soll die Ausführung bestätigen und dich (Angriffstrupp) nach dem Repeaterempfang fragen.
+
+DEIN VERHALTEN:
+- Warte auf die Rückfrage nach Repeaterempfang vom Sicherheitstrupp
+- Bestätige, dass du den Repeaterempfang hast (oder melde Probleme)
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Sicherheitstrupp: "Angriffstrupp von Sicherheitstrupp, Repeater geschaltet, bestätigt Repeaterempfang, kommen"
+Du: "Sicherheitstrupp von Angriffstrupp, Repeaterempfang vorhanden, Signalstärke gut, kommen"

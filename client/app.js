@@ -26,6 +26,8 @@ class BOSTrainer {
             evaluationContent: document.getElementById('evaluation-content'),
             restartButton: document.getElementById('restart-button'),
             connectionStatus: document.getElementById('connection-status'),
+            backButton: document.getElementById('back-button'),
+            headerTitle: document.getElementById('header-title'),
         };
 
         this.init();
@@ -175,14 +177,49 @@ class BOSTrainer {
     }
 
     displayScenarios(scenarios) {
-        this.elements.scenarioList.innerHTML = scenarios.map(s => `
-            <div class="scenario-item ${s.is_demo ? 'demo' : ''}" data-key="${s.key}" data-demo="${s.is_demo}">
-                <div class="name">${s.name}</div>
-                <div class="description">${s.description}</div>
-                <div class="roles-preview">${s.is_demo ? '🎧 Demo zum Anhören' : `Du: ${s.user_role} | Gegenstelle: ${s.ai_role}`}</div>
-            </div>
-        `).join('');
+        // Group scenarios by category
+        const categories = {};
+        scenarios.forEach(s => {
+            const cat = s.category || 'Einsatz-Szenarien';
+            if (!categories[cat]) categories[cat] = [];
+            categories[cat].push(s);
+        });
 
+        const categoryNames = Object.keys(categories);
+        
+        // Build tabs + content
+        let tabsHtml = '<div class="category-tabs">';
+        let contentHtml = '';
+        
+        categoryNames.forEach((cat, idx) => {
+            const tabId = `cat-${idx}`;
+            tabsHtml += `<button class="category-tab ${idx === 0 ? 'active' : ''}" data-tab="${tabId}">${cat}</button>`;
+            
+            const items = categories[cat].map(s => `
+                <div class="scenario-item ${s.is_demo ? 'demo' : ''}" data-key="${s.key}" data-demo="${s.is_demo}">
+                    <div class="name">${s.name}</div>
+                    <div class="description">${s.description}</div>
+                    <div class="roles-preview">${s.is_demo ? '🎧 Demo zum Anhören' : `Du: ${s.user_role} | Gegenstelle: ${s.ai_role}`}</div>
+                </div>
+            `).join('');
+            
+            contentHtml += `<div class="category-content ${idx === 0 ? '' : 'hidden'}" id="${tabId}">${items}</div>`;
+        });
+        
+        tabsHtml += '</div>';
+        this.elements.scenarioList.innerHTML = tabsHtml + contentHtml;
+
+        // Tab switching
+        this.elements.scenarioList.querySelectorAll('.category-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                this.elements.scenarioList.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                this.elements.scenarioList.querySelectorAll('.category-content').forEach(c => c.classList.add('hidden'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.remove('hidden');
+            });
+        });
+
+        // Scenario click handlers
         this.elements.scenarioList.querySelectorAll('.scenario-item').forEach(item => {
             item.addEventListener('click', () => {
                 const key = item.dataset.key;
@@ -226,6 +263,7 @@ class BOSTrainer {
         this.elements.scenarioSelection.classList.add('hidden');
         this.elements.briefingSection.classList.remove('hidden');
         this.elements.trainingSection.classList.remove('hidden');
+        this.elements.backButton.classList.remove('hidden');
         this.elements.transcriptLog.innerHTML = '';
         
         // Hide PTT button in demo mode
@@ -311,6 +349,7 @@ class BOSTrainer {
         this.elements.scenarioSelection.classList.add('hidden');
         this.elements.briefingSection.classList.remove('hidden');
         this.elements.trainingSection.classList.remove('hidden');
+        this.elements.backButton.classList.remove('hidden');
         this.elements.transcriptLog.innerHTML = '';
         
         // Show PTT button for interactive mode
@@ -333,6 +372,14 @@ class BOSTrainer {
             this.addTranscriptEntry('ai', this.currentScenario?.ai_role || 'GEGENSTELLE', msg.reply);
         }
         
+        // If no reply and no audio: this is an "Ende" response, evaluation follows
+        if (!msg.reply && !msg.audio) {
+            this.elements.pttButton.disabled = true;
+            this.elements.endButton.disabled = true;
+            this.setStatus('Auswertung wird erstellt...', 'processing');
+            return;
+        }
+        
         // Play audio if available
         if (msg.audio) {
             this.playAudio(msg.audio);
@@ -344,93 +391,101 @@ class BOSTrainer {
 
     onEvaluation(msg) {
         console.log('onEvaluation called with:', JSON.stringify(msg, null, 2));
-        this.elements.trainingSection.classList.add('hidden');
-        this.elements.briefingSection.classList.add('hidden');
-        this.elements.evaluationSection.classList.remove('hidden');
         
-        // Check if we have structured evaluation
+        // Disable PTT and end button
+        this.elements.pttButton.disabled = true;
+        this.elements.endButton.disabled = true;
+        
+        // Keep training section visible - show evaluation inline
         if (msg.evaluation) {
-            console.log('Rendering structured evaluation:', JSON.stringify(msg.evaluation, null, 2));
-            this.renderStructuredEvaluation(msg.evaluation);
+            this.renderInlineEvaluation(msg.evaluation);
         } else if (msg.analysis) {
-            // Fallback to text display
-            console.log('Rendering text analysis');
-            this.elements.evaluationContent.textContent = msg.analysis;
+            this.appendEvaluationSummary(msg.analysis);
         } else {
-            console.log('No evaluation data found in msg:', Object.keys(msg));
-            this.elements.evaluationContent.textContent = 'Keine Auswertung verfügbar.';
+            this.appendEvaluationSummary('Keine Auswertung verfügbar.');
         }
     }
 
-    renderStructuredEvaluation(evaluation) {
-        const container = this.elements.evaluationContent;
-        container.innerHTML = '';
-
-        try {
-            // Overall score header
-            const scoreColor = this.getScoreColor(evaluation.overall_score);
-            const header = document.createElement('div');
-            header.className = 'eval-header';
-            header.innerHTML = `
-                <div class="eval-overall-score" style="background-color: ${scoreColor}">
-                    <span class="score-value">${evaluation.overall_score}%</span>
-                    <span class="score-label">Gesamtbewertung</span>
-                </div>
-                <div class="eval-summary">${evaluation.summary || ''}</div>
-            `;
-            container.appendChild(header);
-
-            // Individual messages
-            if (evaluation.messages && evaluation.messages.length > 0) {
-                const messagesSection = document.createElement('div');
-                messagesSection.className = 'eval-messages';
-                messagesSection.innerHTML = '<h3>📝 Deine Funksprüche</h3>';
-                
-                evaluation.messages.forEach((msg, idx) => {
-                    const msgColor = this.getScoreColor(msg.score);
-                    const msgCard = document.createElement('div');
-                    msgCard.className = 'eval-message-card';
-                    msgCard.innerHTML = `
-                        <div class="msg-header">
-                            <span class="msg-number">Funkspruch ${msg.number || idx + 1}</span>
-                            <span class="msg-score" style="background-color: ${msgColor}">${msg.score}%</span>
-                        </div>
-                        <div class="msg-text">"${msg.text}"</div>
-                        <div class="msg-details">
-                            ${msg.correct && msg.correct.length > 0 ? 
-                                `<div class="msg-correct">✅ ${msg.correct.join('<br>✅ ')}</div>` : ''}
-                            ${msg.improvements && msg.improvements.length > 0 ? 
-                                `<div class="msg-improvements">⚠️ ${msg.improvements.join('<br>⚠️ ')}</div>` : ''}
-                            ${msg.errors && msg.errors.length > 0 ? 
-                                `<div class="msg-errors">❌ ${msg.errors.join('<br>❌ ')}</div>` : ''}
-                            ${msg.improved ? 
-                                `<div class="msg-improved"><strong>💡 Besser:</strong> "${msg.improved}"</div>` : ''}
-                        </div>
-                    `;
-                    messagesSection.appendChild(msgCard);
-                });
-                container.appendChild(messagesSection);
-            }
-
-            // Tips
-            if (evaluation.tips && evaluation.tips.length > 0) {
-                const tipsSection = document.createElement('div');
-                tipsSection.className = 'eval-tips';
-                tipsSection.innerHTML = `
-                    <h3>💡 Verbesserungstipps</h3>
-                    <ol>
-                        ${evaluation.tips.map(tip => `<li>${tip}</li>`).join('')}
-                    </ol>
-                `;
-                container.appendChild(tipsSection);
-            }
+    renderInlineEvaluation(evaluation) {
+        // Attach per-message evaluations as collapsibles under the corresponding transcript entries
+        if (evaluation.messages && evaluation.messages.length > 0) {
+            const userEntries = this.elements.transcriptLog.querySelectorAll('.transcript-entry.user');
             
-            console.log('Evaluation rendered successfully');
-        } catch (error) {
-            console.error('Error rendering evaluation:', error);
-            container.innerHTML = `<p style="color: red;">Fehler beim Anzeigen der Auswertung: ${error.message}</p>
-                <pre>${JSON.stringify(evaluation, null, 2)}</pre>`;
+            evaluation.messages.forEach((msg, idx) => {
+                const msgNumber = msg.number || (idx + 1);
+                const targetEntry = userEntries[msgNumber - 1];
+                if (!targetEntry) return;
+                
+                const scoreColor = this.getScoreColor(msg.score);
+                const collapsible = document.createElement('div');
+                collapsible.className = 'eval-collapsible';
+                collapsible.innerHTML = `
+                    <button class="eval-toggle" onclick="this.parentElement.classList.toggle('open')">
+                        <span class="eval-toggle-score" style="background:${scoreColor}">${msg.score}%</span>
+                        <span class="eval-toggle-label">Auswertung</span>
+                        <span class="eval-toggle-arrow">▶</span>
+                    </button>
+                    <div class="eval-details">
+                        ${msg.correct && msg.correct.length > 0 ? 
+                            `<div class="msg-correct">✅ ${msg.correct.join('<br>✅ ')}</div>` : ''}
+                        ${msg.improvements && msg.improvements.length > 0 ? 
+                            `<div class="msg-improvements">⚠️ ${msg.improvements.join('<br>⚠️ ')}</div>` : ''}
+                        ${msg.errors && msg.errors.length > 0 ? 
+                            `<div class="msg-errors">❌ ${msg.errors.join('<br>❌ ')}</div>` : ''}
+                        ${msg.improved ? 
+                            `<div class="msg-improved"><strong>💡 Besser:</strong> "${msg.improved}"</div>` : ''}
+                    </div>
+                `;
+                targetEntry.after(collapsible);
+            });
         }
+
+        // Append summary at the bottom of the transcript
+        const scoreColor = this.getScoreColor(evaluation.overall_score);
+        let summaryHtml = `
+            <div class="eval-summary-block">
+                <div class="eval-summary-header">
+                    <h3>🔍 Auswertung</h3>
+                    <div class="eval-overall-badge" style="background:${scoreColor}">${evaluation.overall_score}%</div>
+                </div>
+                <div class="eval-summary-text">${evaluation.summary || ''}</div>
+        `;
+        
+        if (evaluation.tips && evaluation.tips.length > 0) {
+            summaryHtml += `
+                <div class="eval-tips-inline">
+                    <strong>💡 Tipps:</strong>
+                    <ol>${evaluation.tips.map(t => `<li>${t}</li>`).join('')}</ol>
+                </div>
+            `;
+        }
+        
+        summaryHtml += `
+                <button class="restart-button" onclick="document.getElementById('restart-trigger').click()">Neues Training</button>
+            </div>
+        `;
+        
+        const summaryDiv = document.createElement('div');
+        summaryDiv.innerHTML = summaryHtml;
+        this.elements.transcriptLog.appendChild(summaryDiv);
+        
+        // Remove max-height limit so full evaluation is scrollable
+        this.elements.transcriptLog.style.maxHeight = 'none';
+        this.elements.transcriptLog.scrollTop = this.elements.transcriptLog.scrollHeight;
+    }
+
+    appendEvaluationSummary(text) {
+        const summaryDiv = document.createElement('div');
+        summaryDiv.innerHTML = `
+            <div class="eval-summary-block">
+                <h3>🔍 Auswertung</h3>
+                <div class="eval-summary-text">${text}</div>
+                <button class="restart-button" onclick="document.getElementById('restart-trigger').click()">Neues Training</button>
+            </div>
+        `;
+        this.elements.transcriptLog.appendChild(summaryDiv);
+        this.elements.transcriptLog.style.maxHeight = 'none';
+        this.elements.transcriptLog.scrollTop = this.elements.transcriptLog.scrollHeight;
     }
 
     getScoreColor(score) {
@@ -442,6 +497,12 @@ class BOSTrainer {
     addTranscriptEntry(type, role, content) {
         const entry = document.createElement('div');
         entry.className = `transcript-entry ${type}`;
+        // Track user message index for evaluation matching
+        if (type === 'user') {
+            if (!this.userMessageCount) this.userMessageCount = 0;
+            this.userMessageCount++;
+            entry.dataset.userMsgIndex = this.userMessageCount;
+        }
         entry.innerHTML = `
             <div class="role-label">${role}</div>
             <div class="content">${content}</div>
@@ -532,10 +593,27 @@ class BOSTrainer {
             }
         });
 
-        // Restart button
-        this.elements.restartButton.addEventListener('click', () => {
+        // Restart button (hidden trigger for inline evaluation)
+        document.getElementById('restart-trigger').addEventListener('click', () => {
             this.resetToSelection();
         });
+        if (this.elements.restartButton) {
+            this.elements.restartButton.addEventListener('click', () => {
+                this.resetToSelection();
+            });
+        }
+
+        // Back button and header title → return to main menu
+        this.elements.backButton.addEventListener('click', () => this.goBack());
+        this.elements.headerTitle.addEventListener('click', () => this.goBack());
+    }
+
+    goBack() {
+        // If in a session, end it first
+        if (this.currentScenario && !this.elements.pttButton.disabled) {
+            this.ws.send(JSON.stringify({ type: 'end_session' }));
+        }
+        this.resetToSelection();
     }
 
     resetToSelection() {
@@ -543,11 +621,14 @@ class BOSTrainer {
         this.elements.trainingSection.classList.add('hidden');
         this.elements.briefingSection.classList.add('hidden');
         this.elements.scenarioSelection.classList.remove('hidden');
+        this.elements.backButton.classList.add('hidden');
         this.elements.pttButton.style.display = '';
         this.elements.endButton.textContent = 'Training beenden';
+        this.elements.transcriptLog.style.maxHeight = '';
         this.currentScenario = null;
         this.isDemo = false;
         this.demoQueue = [];
+        this.userMessageCount = 0;
     }
 
     async startRecording() {

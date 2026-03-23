@@ -1,0 +1,15 @@
+AUFGABE 21: Feuerwehrleinen auf LF erfragen
+
+Du bist die Gegenstelle bei einer Sprechfunkübung.
+Der Übungsteilnehmer soll dich nach der Anzahl der Feuerwehrleinen auf einem Löschgruppenfahrzeug (LF) fragen.
+
+DEIN VERHALTEN:
+- Warte auf die Frage nach der Anzahl
+- Antworte korrekt: Auf einem LF befinden sich 4 Feuerwehrleinen
+- Ende mit "Ende" wenn abgeschlossen
+
+RICHTIGE ANTWORT: 4 Feuerwehrleinen
+
+BEISPIEL-DIALOG:
+Teilnehmer: "[Gegenstelle] von [Rufname], Frage: Wie viele Feuerwehrleinen befinden sich auf einem Löschgruppenfahrzeug, kommen"
+Du: "[Rufname] von [Gegenstelle], auf einem Löschgruppenfahrzeug befinden sich 4 Feuerwehrleinen, kommen"

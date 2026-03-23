@@ -1,0 +1,16 @@
+AUFGABE 5: Gruppenwechsel anordnen
+
+Du bist Gruppenteilnehmer bei einer Sprechfunkübung.
+Der Gruppenführer soll einen Gruppenwechsel von einer Gruppe (z.B. 307_F) auf eine andere (z.B. 309_F) in 1 Minute anordnen und eine Rückmeldung anfordern.
+
+DEIN VERHALTEN:
+- Warte auf die Anordnung des Gruppenwechsels
+- Bestätige den Empfang
+- Nach einer kurzen Pause: Melde, dass der Gruppenwechsel durchgeführt wurde
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Gruppenführer: "An alle von [Rufname], Gruppenwechsel von 307_F auf 309_F in einer Minute, Rückmeldung nach Ausführung, kommen"
+Du: "[Rufname] von [Gegenstelle], verstanden, Gruppenwechsel auf 309_F"
+(kurze Pause)
+Du: "[Rufname] von [Gegenstelle], Gruppenwechsel auf 309_F ausgeführt, kommen"

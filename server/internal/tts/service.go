@@ -35,7 +35,7 @@ func NewProvider() (Provider, error) {
 
 // PrepareTTSText prepares text for TTS by converting radio call signs
 // like "47/1" or "47/1-1" to spoken form "47 1" or "47 1 1".
-// This prevents TTS from reading them as math equations.
+// Also fixes pronunciation of compound words that TTS engines struggle with.
 func PrepareTTSText(text string) string {
 	// Pattern for vehicle identifiers: number/number or number/number-number
 	// Examples: 47/1, 47/1-1, 83/1, 10/43-1
@@ -48,7 +48,38 @@ func PrepareTTSText(text string) string {
 		return replaced
 	})
 	
+	// Fix compound word pronunciation (TTS says "schtrupp" instead of "trupp")
+	// Insert a slight pause via hyphen to help TTS pronounce correctly
+	for _, pair := range ttsPronunciationFixes {
+		result = strings.ReplaceAll(result, pair[0], pair[1])
+	}
+	// Case-insensitive replacements for start of sentence
+	for _, pair := range ttsPronunciationFixes {
+		titleCase := strings.ToUpper(pair[0][:1]) + pair[0][1:]
+		titleRepl := strings.ToUpper(pair[1][:1]) + pair[1][1:]
+		result = strings.ReplaceAll(result, titleCase, titleRepl)
+	}
+	
 	return result
+}
+
+// ttsPronunciationFixes maps mispronounced compound words to TTS-friendly forms.
+// TTS engines often mispronounce "strupp" as "schtrupp" in compound words.
+var ttsPronunciationFixes = [][2]string{
+	{"Angriffstrupp", "Angriffs-Trupp"},
+	{"Wassertrupp", "Wasser-Trupp"},
+	{"Schlauchtrupp", "Schlauch-Trupp"},
+	{"Sicherheitstrupp", "Sicherheits-Trupp"},
+	{"Rettungstrupp", "Rettungs-Trupp"},
+	{"Angriffstruppführer", "Angriffs-Truppführer"},
+	{"Wassertruppführer", "Wasser-Truppführer"},
+	{"Schlauchtruppführer", "Schlauch-Truppführer"},
+	{"Sicherheitstruppführer", "Sicherheits-Truppführer"},
+	{"Rettungstruppführer", "Rettungs-Truppführer"},
+	{"Angriffstruppmann", "Angriffs-Truppmann"},
+	{"Wassertruppmann", "Wasser-Truppmann"},
+	{"Schlauchtruppmann", "Schlauch-Truppmann"},
+	{"Sicherheitstruppmann", "Sicherheits-Truppmann"},
 }
 
 // pcmToWAV wraps raw PCM data in a WAV header.

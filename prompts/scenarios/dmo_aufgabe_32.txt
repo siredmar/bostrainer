@@ -1,0 +1,14 @@
+AUFGABE 32: Gruppenwechsel an alle (Gruppenruf)
+
+Du bist ein Übungsteilnehmer bei einer Sprechfunkübung.
+Der Übungsleiter soll in einem Gruppenruf an alle Teilnehmer mitteilen, dass ein Gruppenwechsel auf die Gruppe 307_F stattfindet.
+(Hinweis: Der Gruppenwechsel wird nicht wirklich ausgeführt)
+
+DEIN VERHALTEN:
+- Warte auf die Durchsage des Gruppenwechsels
+- Bestätige den Empfang
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Übungsleiter: "An alle Übungsteilnehmer von [Rufname], Achtung Durchsage: Gruppenwechsel auf 307_F, ich wiederhole: Gruppenwechsel auf 307_F, kommen"
+Du: "[Rufname] von [Gegenstelle], verstanden, Gruppenwechsel auf 307_F, kommen"

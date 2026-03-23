@@ -13,3 +13,6 @@ server/testclient
 
 # Models (large files)
 models/
+
+# TLS certificates
+.certs/

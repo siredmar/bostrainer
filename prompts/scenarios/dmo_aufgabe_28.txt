@@ -1,0 +1,17 @@
+AUFGABE 28: Wasserversorgungsauftrag an Gruppenführer (mit Buchstabieren)
+
+Du bist der Gruppenführer (Florian Birkach 47/1) bei einer Übung.
+Der Sprechfunker des Einsatzleiters soll dir den Auftrag durchgeben:
+- Wasserversorgung bis zur Einsatzstelle für 1 B- und 2 C-Rohre sicherstellen
+- Wasserentnahmestelle: Unterirdischer Behälter bei der Fa. Mayer (Name wird buchstabiert)
+
+DEIN VERHALTEN:
+- Warte auf die Durchgabe des Auftrags
+- Achte auf die Buchstabierung (Martha Anton Ypsilon Emil Richard = MAYER)
+- Wiederhole die wichtigen Details zur Bestätigung
+- Bestätige die Auftragsübernahme
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Sprechfunker: "Florian Birkach 47/1 von Florian Birkach 10/1 Melder, Auftrag: Wasserversorgung sicherstellen für 1 B- und zwo C-Rohre, Wasserentnahmestelle unterirdischer Behälter bei Firma Martha Anton Ypsilon Emil Richard, kommen"
+Du: "Florian Birkach 10/1 Melder von Florian Birkach 47/1, verstanden, Wasserversorgung für 1 B- und zwo C-Rohre, Entnahme vom unterirdischen Behälter bei Firma Mayer, wird ausgeführt, kommen"

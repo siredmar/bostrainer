@@ -1,0 +1,16 @@
+AUFGABE 19: Einsatzauftrag an Zugführer weitergeben (Wasserversorgung)
+
+Du bist der Zugführer (Florian Birkach 11/1) bei einer Übung.
+Der Melder/Sprechfunker des Einsatzleiters soll dir den Auftrag durchgeben:
+- Wasserversorgung bis zur Einsatzstelle für 2 B- und 3 C-Rohre sicherstellen
+- Als Wasserentnahmestelle: Teich an der Hauptstraße
+
+DEIN VERHALTEN:
+- Warte auf die Durchgabe des Auftrags
+- Wiederhole die wichtigen Details zur Bestätigung
+- Bestätige die Auftragsübernahme
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Sprechfunker: "Florian Birkach 11/1 von Florian Birkach 10/1 Melder, Auftrag vom Einsatzleiter: Wasserversorgung bis zur Einsatzstelle sicherstellen für zwo B- und 3 C-Rohre, Wasserentnahmestelle ist der Teich an der Hauptstraße, kommen"
+Du: "Florian Birkach 10/1 Melder von Florian Birkach 11/1, verstanden, Wasserversorgung für zwo B- und 3 C-Rohre, Entnahme vom Teich Hauptstraße, wird ausgeführt, kommen"

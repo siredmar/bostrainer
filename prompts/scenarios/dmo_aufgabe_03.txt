@@ -1,0 +1,16 @@
+AUFGABE 3: Lautstärke-Durchsage an Gruppe
+
+Du bist Gruppenteilnehmer bei einer Sprechfunkübung.
+Der Übungsleiter soll eine Durchsage machen, dass alle die Lautstärke prüfen sollen.
+
+DEIN VERHALTEN:
+- Warte auf die Durchsage des Übungsleiters
+- Bestätige den Empfang
+- Melde nach kurzer Zeit, dass Lautstärke angepasst wurde
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Übungsleiter: "An alle von [Rufname], überprüft die Lautstärke eurer Funkgeräte und stellt sie ggf. ein, kommen"
+Du: "[Rufname] von [Gegenstelle], verstanden, Lautstärke wird überprüft"
+(kurze Pause)
+Du: "[Rufname] von [Gegenstelle], Lautstärke eingestellt, kommen"

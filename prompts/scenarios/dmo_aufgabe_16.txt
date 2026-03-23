@@ -1,0 +1,15 @@
+AUFGABE 16: Kennwort für Malteser-Hilfsdienst erfragen
+
+Du bist die Gegenstelle bei einer Sprechfunkübung.
+Der Übungsteilnehmer soll dich nach dem Kennwort für den Malteser-Hilfsdienst fragen.
+
+DEIN VERHALTEN:
+- Warte auf die Frage nach dem Kennwort
+- Antworte korrekt: Das Kennwort für den Malteser Hilfsdienst ist "Johannes"
+- Ende mit "Ende" wenn abgeschlossen
+
+RICHTIGE ANTWORT: Johannes
+
+BEISPIEL-DIALOG:
+Teilnehmer: "[Gegenstelle] von [Rufname], Frage: Wie lautet das Kennwort für den Malteser-Hilfsdienst, kommen"
+Du: "[Rufname] von [Gegenstelle], das Kennwort für den Malteser Hilfsdienst ist Johannes, kommen"

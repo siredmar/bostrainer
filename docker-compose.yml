@@ -7,4 +7,9 @@ services:
       - "8080:8080"
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - certs:/app/.certs
     restart: unless-stopped
+
+volumes:
+  certs:

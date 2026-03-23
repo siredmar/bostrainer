@@ -1,12 +1,9 @@
 # Build stage
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /build
 
-# Install build dependencies
-RUN apk add --no-cache git
-
-# Copy go mod files
+# Copy go mod files first for layer caching
 COPY server/go.mod server/go.sum ./server/
 WORKDIR /build/server
 RUN go mod download
@@ -15,31 +12,32 @@ RUN go mod download
 WORKDIR /build
 COPY server/ ./server/
 
-# Build the server
+# Build static binary
 WORKDIR /build/server
-RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /server ./cmd/server
 
-# Runtime stage
-FROM alpine:3.19
+# Runtime stage - minimal Alpine
+FROM alpine:3.21
 
-# Install CA certificates for HTTPS
+# CA certs for outbound HTTPS (Gemini API, Google TTS)
 RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
 
-# Copy binary from builder
+# Copy binary
 COPY --from=builder /server /app/server
 
-# Copy client files
+# Copy client and prompts
 COPY client/ /app/client/
-
-# Copy prompts
 COPY prompts/ /app/prompts/
 
-# Environment variables
+# TLS certs will be auto-generated here
+VOLUME /app/.certs
+
 ENV PORT=8080
 ENV CLIENT_DIR=/app/client
 ENV PROMPTS_DIR=/app/prompts
+ENV CERT_DIR=/app/.certs
 
 EXPOSE 8080
 

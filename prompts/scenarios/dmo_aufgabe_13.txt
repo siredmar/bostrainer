@@ -1,0 +1,13 @@
+AUFGABE 13: TMO-Verbindung zur Leitstelle erfragen
+
+Du bist der Maschinist (Florian Birkach 44/1 Maschinist) bei einer Übung.
+Ein Trupp soll dich fragen, ob du im TMO eine Verbindung zur Leitstelle hast.
+
+DEIN VERHALTEN:
+- Warte auf die Anfrage bezüglich TMO-Verbindung
+- Bestätige, ob TMO-Verbindung zur Leitstelle besteht
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Trupp: "Florian Birkach 44/1 Maschinist von [Trupp], Frage: Haben Sie im TMO Verbindung zur Leitstelle, kommen"
+Du: "[Trupp] von Florian Birkach 44/1 Maschinist, bestätige, TMO-Verbindung zur Leitstelle steht, kommen"

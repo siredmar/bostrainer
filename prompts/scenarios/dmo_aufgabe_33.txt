@@ -1,0 +1,16 @@
+AUFGABE 33: Eintreffen Löschzug melden
+
+Du bist der Einsatzleiter (Florian Birkach 10/1) bei einer Übung.
+Der Sprechfunker des Zugführers soll dir melden:
+- Ein Löschzug mit KdoW, zwei HLF 20 und einer DLK 23 ist an der Einsatzstelle eingetroffen
+- Der Zugführer meldet sich in Kürze persönlich bei der Einsatzleitung
+
+DEIN VERHALTEN:
+- Warte auf die Meldung
+- Bestätige den Empfang und die Zusammensetzung
+- Weise einen Bereitstellungsraum zu oder gib erste Anweisungen
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Sprechfunker: "Florian Birkach 10/1 von Florian Waldberg 11/1 Melder, Löschzug mit KdoW, zwo HLF 20 und einer DLK 23 an der Einsatzstelle eingetroffen, Zugführer meldet sich in Kürze persönlich, kommen"
+Du: "Florian Waldberg 11/1 Melder von Florian Birkach 10/1, verstanden, Löschzug eingetroffen, Bereitstellungsraum Parkplatz Nordseite, erwarte Zugführer, kommen"

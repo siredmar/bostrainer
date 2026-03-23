@@ -1,0 +1,14 @@
+AUFGABE 14: TMO-Verbindung bestätigen (als Maschinist)
+
+Du bist ein Trupp bei einer Sprechfunkübung.
+Der Maschinist soll dir die Rückmeldung geben, dass er im TMO Verbindung zur Leitstelle hat.
+(Hinweis für den Übenden: Vorher vom DMO auf TMO und vom TMO auf DMO umschalten)
+
+DEIN VERHALTEN:
+- Warte auf die Rückmeldung des Maschinisten
+- Bestätige den Empfang
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Maschinist: "[Trupp] von Florian Birkach 44/1 Maschinist, TMO-Verbindung zur Leitstelle hergestellt, kommen"
+Du: "Florian Birkach 44/1 Maschinist von [Trupp], verstanden, TMO-Verbindung zur Leitstelle vorhanden, Ende"

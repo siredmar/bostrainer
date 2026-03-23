@@ -122,6 +122,7 @@ type ScenarioInfo struct {
 	UserRole    string `json:"user_role"`
 	AIRole      string `json:"ai_role"`
 	IsDemo      bool   `json:"is_demo"`
+	Category    string `json:"category"`
 }
 
 // DemoLine represents a single line in a demo dialogue.
@@ -257,6 +258,7 @@ func (c *Client) handleListScenarios() {
 			UserRole:    s.UserRole,
 			AIRole:      s.AIRole,
 			IsDemo:      s.IsDemo,
+			Category:    s.Category,
 		}
 	}
 
@@ -737,15 +739,32 @@ func (c *Client) generateStructuredEvaluation() *EvaluationResult {
 	evalPrompt := `Du bist ein erfahrener BOS-Funk-Ausbilder für die Freiwillige Feuerwehr Bayern.
 Analysiere die folgenden Funksprüche des Schülers anhand der FwDV 810 Funkregeln.
 
+FUNKREGELN (FwDV 810) – DIESE REGELN SIND MASSGEBLICH:
+
+1. ANRUF: "Empfänger von Sender" – z.B. "Leitstelle Roth von Florian Birkach 47/1"
+2. ANTWORT/ANNAHME: Der Angerufene antwortet mit "Hier [eigener Rufname]" – z.B. "Hier Leitstelle Roth"
+   WICHTIG: Die Annahme eines Anrufs erfolgt IMMER mit "Hier", NICHT mit "Empfänger von Sender"!
+3. FRAGEN: Jede Frage MUSS mit dem Wort "Frage" eingeleitet werden – z.B. "Frage: Was ist euer Standort?"
+   Das Wort "Frage" ist PFLICHT und NICHT überflüssig!
+4. "KOMMEN": Am Ende eines Funkspruchs = Antwort wird erwartet
+5. "ENDE": Beendet das Gespräch sofort, keine weitere Antwort
+6. BESTÄTIGUNG: Einfache Meldungen mit "Verstanden", komplexe mit Wiederholung der Kernpunkte
+7. ZAHLEN: Einzeln sprechen. "Zwo" statt "Zwei" (nur alleinstehend)
+8. HÖFLICHKEITSFORMEN: Vermeiden (kein "Danke", "Bitte")
+9. DISKRETION: Keine Personennamen
+10. BUCHSTABIEREN: Bei schwierigen Wörtern mit Buchstabiertafel
+
 BEWERTUNGSKRITERIEN:
-1. ANRUF-STRUKTUR: Korrekte Reihenfolge "Empfänger von Sender"?
-2. KOMMEN/ENDE: "kommen" wenn Antwort erwartet, "Ende" zum Beenden?
-3. KLARHEIT: Kurz, klar, eindeutig? Keine Umgangssprache?
-4. RUFNAMEN: Korrekte Verwendung der Funkrufnamen?
-5. MELDUNGSINHALT: Vollständig? Alle relevanten Infos enthalten?
-6. ZAHLEN: Einzeln gesprochen? "Zwo" statt "Zwei"?
-7. HÖFLICHKEITSFORMEN: Vermieden? Kein "Danke", "Bitte"?
-8. DISKRETION: Keine Personennamen genannt?
+1. ANRUF-STRUKTUR: Korrekte Reihenfolge "Empfänger von Sender" beim Anruf?
+2. ANTWORT: Annahme mit "Hier [Rufname]"?
+3. FRAGEN: Mit "Frage" eingeleitet? (Das ist PFLICHT, nicht optional!)
+4. KOMMEN/ENDE: Korrekt verwendet?
+5. KLARHEIT: Kurz, klar, eindeutig? Keine Umgangssprache?
+6. RUFNAMEN: Korrekte Verwendung der Funkrufnamen?
+7. MELDUNGSINHALT: Vollständig? Alle relevanten Infos enthalten?
+8. ZAHLEN: Einzeln gesprochen? "Zwo" statt "Zwei"?
+9. HÖFLICHKEITSFORMEN: Vermieden?
+10. DISKRETION: Keine Personennamen?
 
 WICHTIG: Antworte NUR mit validem JSON im folgenden Format:
 

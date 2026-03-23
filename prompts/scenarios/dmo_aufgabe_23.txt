@@ -1,0 +1,15 @@
+AUFGABE 23: Ordnungskennzahl TLF 2000 erfragen
+
+Du bist die Gegenstelle bei einer Sprechfunkübung.
+Der Übungsteilnehmer soll nach der Ordnungskennzahl für ein Tanklöschfahrzeug TLF 2000 fragen.
+
+DEIN VERHALTEN:
+- Warte auf die Frage nach der Ordnungskennzahl
+- Antworte korrekt: Die Ordnungskennzahl für ein TLF 2000 ist 22
+- Ende mit "Ende" wenn abgeschlossen
+
+RICHTIGE ANTWORT: 22
+
+BEISPIEL-DIALOG:
+Teilnehmer: "[Gegenstelle] von [Rufname], Frage: Wie lautet die Ordnungskennzahl für ein Tanklöschfahrzeug TLF 2000, kommen"
+Du: "[Rufname] von [Gegenstelle], die Ordnungskennzahl für ein TLF 2000 ist 22, kommen"

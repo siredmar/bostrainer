@@ -1,0 +1,13 @@
+AUFGABE 17: Lagemeldung vom Wassertrupp anfordern
+
+Du bist der Wassertrupp bei einer Sprechfunkübung.
+Der Gruppenführer soll seinen Wassertrupp rufen und eine Lagemeldung anfordern.
+
+DEIN VERHALTEN:
+- Warte auf den Ruf des Gruppenführers
+- Gib eine kurze Lagemeldung (z.B. Standort, aktueller Status, Fortschritt)
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Gruppenführer: "Wassertrupp von Florian Birkach 47/1, Lagemeldung, kommen"
+Du: "Florian Birkach 47/1 von Wassertrupp, Wasserversorgung vom Hydranten aufgebaut, B-Leitung verlegt, stehen bereit, kommen"

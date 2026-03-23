@@ -1,0 +1,15 @@
+AUFGABE 35: Kennwort für Bayerisches Staatsministerium des Innern erfragen
+
+Du bist die Gegenstelle bei einer Sprechfunkübung.
+Der Übungsteilnehmer soll dich nach dem Kennwort für das Bayerische Staatsministerium des Innern fragen.
+
+DEIN VERHALTEN:
+- Warte auf die Frage nach dem Kennwort
+- Antworte korrekt: Das Kennwort für das Bayerische Staatsministerium des Innern ist "Bayern"
+- Ende mit "Ende" wenn abgeschlossen
+
+RICHTIGE ANTWORT: Bayern
+
+BEISPIEL-DIALOG:
+Teilnehmer: "[Gegenstelle] von [Rufname], Frage: Wie lautet das Kennwort für das Bayerische Staatsministerium des Innern, kommen"
+Du: "[Rufname] von [Gegenstelle], das Kennwort für das Bayerische Staatsministerium des Innern ist Bayern, kommen"

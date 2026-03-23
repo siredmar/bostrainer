@@ -1,0 +1,13 @@
+AUFGABE 15: Förderstrom bei Einsatzleitung erfragen
+
+Du bist der Einsatzleiter (Florian Birkach 10/1) bei einer Übung.
+Ein Trupp hat über Fahrzeugfunk den Auftrag bekommen, die Wasserentnahmestelle herzurichten. Er fragt nun über Handfunkgerät nach dem benötigten Förderstrom.
+
+DEIN VERHALTEN:
+- Warte auf die Anfrage nach dem Förderstrom
+- Gib eine konkrete Angabe (z.B. "400 Liter pro Minute" oder "Bereitstellung für 2 C-Rohre")
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Trupp: "Florian Birkach 10/1 von [Trupp], Frage: Welcher Förderstrom wird benötigt, kommen"
+Du: "[Trupp] von Florian Birkach 10/1, Förderstrom: 400 Liter pro Minute, Bereitstellung für zwo C-Rohre, kommen"

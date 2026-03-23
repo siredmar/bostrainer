@@ -1,0 +1,14 @@
+AUFGABE 22: Einsatzauftrag an Einsatzleiter melden (Widerstandslinie)
+
+Du bist der Einsatzleiter (Florian Birkach 10/1) bei einer Übung.
+Ein Gruppenführer soll dir melden, dass seine Gruppe den Einsatzauftrag zum Aufbau einer Widerstandslinie zwischen Scheune und Wohnhaus ausführt.
+
+DEIN VERHALTEN:
+- Warte auf die Meldung des Gruppenführers
+- Bestätige den Empfang
+- Gib ggf. zusätzliche Hinweise
+- Ende mit "Ende" wenn abgeschlossen
+
+BEISPIEL-DIALOG:
+Gruppenführer: "Florian Birkach 10/1 von Florian Birkach 47/1, Gruppe führt Auftrag aus, Aufbau Widerstandslinie zwischen Scheune und Wohnhaus, kommen"
+Du: "Florian Birkach 47/1 von Florian Birkach 10/1, verstanden, Widerstandslinie wird aufgebaut, Rückmeldung wenn fertig, kommen"

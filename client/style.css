@@ -41,6 +41,34 @@ header h1 {
     color: var(--primary);
 }
 
+header h1.clickable {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+header h1.clickable:hover {
+    opacity: 0.7;
+}
+
+.back-button {
+    display: block;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    transition: all 0.2s;
+}
+
+.back-button:hover {
+    background: var(--bg);
+    color: var(--text);
+    border-color: var(--text-light);
+}
+
 .card {
     background: var(--card-bg);
     border-radius: 12px;
@@ -60,10 +88,47 @@ header h1 {
 }
 
 /* Scenario Selection */
-.scenario-list {
+.category-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--border);
+}
+
+.category-tab {
+    padding: 0.75rem 1.25rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-light);
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.category-tab:hover {
+    color: var(--primary);
+    background: #fef2f2;
+}
+
+.category-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.category-content {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.scenario-list {
+    display: flex;
+    flex-direction: column;
 }
 
 .scenario-item {
@@ -285,7 +350,122 @@ header h1 {
     color: var(--success);
 }
 
-/* Evaluation */
+/* Inline Evaluation Collapsibles */
+.eval-collapsible {
+    margin: 0 0 0.5rem 2rem;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f9fafb;
+    border: 1px solid var(--border);
+}
+
+.eval-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    transition: background 0.2s;
+}
+
+.eval-toggle:hover {
+    background: #f3f4f6;
+}
+
+.eval-toggle-score {
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.eval-toggle-label {
+    flex: 1;
+    text-align: left;
+}
+
+.eval-toggle-arrow {
+    transition: transform 0.2s;
+    font-size: 0.7rem;
+}
+
+.eval-collapsible.open .eval-toggle-arrow {
+    transform: rotate(90deg);
+}
+
+.eval-details {
+    display: none;
+    padding: 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.eval-collapsible.open .eval-details {
+    display: block;
+}
+
+/* Inline Evaluation Summary */
+.eval-summary-block {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    background: #f0fdf4;
+    border-radius: 12px;
+    border: 2px solid #bbf7d0;
+}
+
+.eval-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.eval-summary-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.eval-overall-badge {
+    padding: 0.35rem 1rem;
+    border-radius: 20px;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.eval-summary-text {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    color: var(--text);
+}
+
+.eval-tips-inline {
+    margin-bottom: 1rem;
+    background: #fffbeb;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+}
+
+.eval-tips-inline ol {
+    margin: 0.5rem 0 0 1.25rem;
+}
+
+.eval-tips-inline li {
+    margin-bottom: 0.25rem;
+}
+
+.eval-summary-block .restart-button {
+    margin-top: 0.5rem;
+}
+
+/* Evaluation (kept for backwards compat) */
 #evaluation-content {
     background: #f9fafb;
     padding: 1rem;
@@ -493,5 +673,15 @@ header h1 {
     
     .ptt-button .icon {
         font-size: 2rem;
+    }
+
+    .category-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .category-tab {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
     }
 }
