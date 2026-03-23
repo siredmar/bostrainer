@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOS-Funk Trainer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚒 BOS-Funk Trainer</h1>
+        </header>
+
+        <!-- Scenario Selection -->
+        <section id="scenario-selection" class="card">
+            <h2>Szenario auswählen</h2>
+            <div id="scenario-list" class="scenario-list">
+                <p class="loading">Verbinde mit Server...</p>
+            </div>
+        </section>
+
+        <!-- Briefing (hidden initially) -->
+        <section id="briefing-section" class="card hidden">
+            <h2>📋 Einsatzbriefing</h2>
+            <div id="briefing-content"></div>
+            <div class="roles">
+                <div class="role">
+                    <span class="label">Du bist:</span>
+                    <span id="user-role"></span>
+                </div>
+                <div class="role">
+                    <span class="label">Gegenstelle:</span>
+                    <span id="ai-role"></span>
+                </div>
+            </div>
+            <div id="first-hint" class="hint"></div>
+        </section>
+
+        <!-- Training Interface (hidden initially) -->
+        <section id="training-section" class="card hidden">
+            <div id="transcript-log" class="transcript-log"></div>
+            
+            <div class="controls">
+                <button id="ptt-button" class="ptt-button" disabled>
+                    <span class="icon">🎙️</span>
+                    <span class="text">Drücken zum Sprechen</span>
+                </button>
+                <button id="end-button" class="end-button" disabled>Training beenden</button>
+            </div>
+
+            <div id="status" class="status">Bereit</div>
+        </section>
+
+        <!-- Evaluation (hidden initially) -->
+        <section id="evaluation-section" class="card hidden">
+            <h2>🔍 Auswertung</h2>
+            <div id="evaluation-content"></div>
+            <button id="restart-button" class="restart-button">Neues Training</button>
+        </section>
+
+        <!-- Connection Status -->
+        <div id="connection-status" class="connection-status disconnected">
+            <span class="dot"></span>
+            <span class="text">Nicht verbunden</span>
+        </div>
+    </div>
+
+    <script src="app.js?v=5"></script>
+</body>
+</html>

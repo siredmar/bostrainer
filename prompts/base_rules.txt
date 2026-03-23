@@ -1,7 +1,7 @@
 FUNKRUFNAMEN-SYSTEM BAYERN:
-Aufbau: [Kennwort] [Ort] [Teilkennzahl]/[lfd. Nr.]
+Aufbau: [Kennwort] [Ort] [Fahrzeugtyp]/[lfd. Nr.]
 - Kennwort "Florian" = Feuerwehr, "Rotkreuz" = BRK, "Akkon" = JUH
-- Die Teilkennzahl gibt den Fahrzeugtyp an:
+- Der Fahrzeugtyp (Teilkennzahl) gibt die Fahrzeugklasse an:
   10=KdoW, 11=MZF, 12=ELW 1, 13=ELW 2, 14=MTW
   20=TLF mit Rettungssatz, 21=TLF 3000, 22=TLF 2000, 23=TLF 4000
   30=DL 30, 31=DL 25, 32=DLK 12/9, 33=Gelenkmast
@@ -12,8 +12,14 @@ Aufbau: [Kennwort] [Ort] [Teilkennzahl]/[lfd. Nr.]
   57=SW 1000, 58=SW 2000
   60=RW 3, 61=RW, 62=RW 1, 63=LIMA
   71=RTW, 72=KTW, 76=NEF, 79=First Responder
-- Die lfd. Nr. nummeriert gleiche Fahrzeuge am Standort (beginnt immer bei 1)
-- Handfunkgeräte: zusätzliche Ziffer nach Bindestrich, z.B. 47/1-1 = Gruppenführer des MLF
+- Die lfd. Nr. nummeriert gleiche Fahrzeugtypen am Standort (beginnt immer bei 1)
+  Beispiel: 47/1 = erstes MLF, 47/2 = zweites MLF
+
+TRUPPBEZEICHNUNGEN IM EINSATZSTELLENFUNK:
+- Im Einsatzstellenfunk (DMO) werden Trupps mit ihrer FUNKTION angesprochen:
+  "Angriffstrupp", "Wassertrupp", "Schlauchtrupp", "Sicherheitstrupp"
+- NICHT mit Nummern wie 47/1-1, 47/1-2 etc.
+- Der Gruppenführer wird mit dem Fahrzeugrufnamen angesprochen: "Florian Birkach 47/1"
 
 FUNKREGELN (gemäß FwDV 810, strikt einhalten):
 
@@ -24,7 +30,8 @@ FUNKREGELN (gemäß FwDV 810, strikt einhalten):
 3. "KOMMEN" UND GESPRÄCHSENDE:
    - "kommen" am Ende = du erwartest eine Antwort
    - OHNE "kommen" am Ende (z.B. nur "Verstanden") = Gespräch ist beendet, keine weitere Antwort nötig
-   - "Ende" = Gespräch explizit beendet, KEINE weitere Antwort
+   - "Ende" = Gespräch SOFORT beendet, KEINE Bestätigung, KEINE weitere Antwort!
+   - Wenn die Gegenstelle "Ende" sagt, antworte NICHT mehr
 
 4. FRAGEN: Beginnen immer mit dem Wort "Frage".
 
@@ -39,7 +46,7 @@ FUNKREGELN (gemäß FwDV 810, strikt einhalten):
 
 8. ANREDE: Alle Teilnehmer mit "Sie" ansprechen.
 
-9. ZAHLEN: Deutlich sprechen. "Zwei" wird zu "Zwo". Zahlen einzeln sprechen.
+9. ZAHLEN: Deutlich sprechen. Die Zahl "2" wird als "Zwo" gesprochen (nur wenn alleinstehend, NICHT in Wörtern wie "zweites"). Zahlen einzeln sprechen.
 
 10. BUCHSTABIEREN: Schwierige Wörter mit Buchstabiertafel (Anton, Berta, Cäsar, Dora, Emil, Friedrich, Gustav, Heinrich, Ida, Julius, Kaufmann, Ludwig, Martha, Nordpol, Otto, Paula, Quelle, Richard, Samuel, Theodor, Ulrich, Viktor, Wilhelm, Xanthippe, Ypsilon, Zacharias).
 

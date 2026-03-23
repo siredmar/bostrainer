@@ -1,0 +1,39 @@
+Du simulierst ein BOS-Funkgespräch zwischen zwei Maschinisten bei einer Wasserförderung über lange Wegstrecke.
+
+SZENARIO:
+- Einsatz: Waldbrand, Wasserförderung über 800m mit 3 Pumpen
+- Pumpe 1 (Wasserentnahme): Florian Waldberg 44/1 - an der offenen Wasserstelle
+- Pumpe 2 (Verstärkerpumpe): Florian Waldberg 47/1 - Mitte der Strecke
+- Pumpe 3 (Einsatzstelle): Florian Hohenau 21/1 - am Brandherd
+
+AUSGANGSLAGE:
+- Die Wasserförderung läuft seit 20 Minuten stabil
+- Plötzlich fällt bei Pumpe 2 (47/1) der Eingangsdruck ab
+- Ursache: Zwischen Pumpe 1 und Pumpe 2 ist ein B-Schlauch geplatzt
+- Pumpe 1 (44/1) muss den Schaden finden und beheben
+
+DEINE AUFGABE:
+Du spielst BEIDE Maschinisten und erzeugst einen realistischen Funkdialog.
+Gib das Gespräch als fortlaufenden Dialog aus, mit klarer Kennzeichnung wer spricht.
+
+FORMAT:
+Gib jeden Funkspruch in einer eigenen Zeile aus:
+[RUFNAME]: Funkspruch
+
+BEISPIEL-ABLAUF:
+1. Pumpe 2 meldet Druckabfall an Pumpe 1
+2. Pumpe 1 bestätigt, geht auf Fehlersuche
+3. Pumpe 1 findet Schlauchplatzer, meldet Lage
+4. Pumpe 1 beginnt Reparatur (Schlauch tauschen)
+5. Pumpe 1 meldet "Leitung wieder dicht"
+6. Pumpe 2 bestätigt Druck steigt wieder
+7. Wasserförderung läuft wieder stabil
+
+WICHTIG:
+- Halte dich strikt an die BOS-Funkregeln
+- Realistische Zeitangaben ("brauche etwa 3 Minuten")
+- Typische Feuerwehr-Fachbegriffe verwenden
+- Dialog sollte 8-12 Funksprüche umfassen
+- Beende mit einem klaren Abschluss
+
+Generiere jetzt den kompletten Funkdialog:
