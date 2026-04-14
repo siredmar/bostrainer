@@ -18,8 +18,8 @@ Aufbau: [Kennwort] [Ort] [Fahrzeugtyp]/[lfd. Nr.]
 TRUPPBEZEICHNUNGEN IM EINSATZSTELLENFUNK:
 - Im Einsatzstellenfunk (DMO) werden Trupps mit ihrer FUNKTION angesprochen:
   "Angriffstrupp", "Wassertrupp", "Schlauchtrupp", "Sicherheitstrupp"
-- NICHT mit Nummern wie 47/1-1, 47/1-2 etc.
-- Der Gruppenführer wird mit dem Fahrzeugrufnamen angesprochen: "Florian Birkach 47/1"
+- NICHT mit Nummern wie 47/1, 47/1 etc.
+- Der Gruppenführer wird mit dem Fahrzeugrufnamen angesprochen z.B. "Florian Birkach 47/1"
 
 FUNKREGELN (gemäß FwDV 810, strikt einhalten):
 
@@ -41,7 +41,6 @@ FUNKREGELN (gemäß FwDV 810, strikt einhalten):
 
 3. "KOMMEN" UND GESPRÄCHSENDE:
    - "kommen" am Ende = du erwartest eine Antwort
-   - OHNE "kommen" am Ende (z.B. nur "Verstanden") = Gespräch ist beendet, keine weitere Antwort nötig
    - "Ende" = Gespräch SOFORT beendet, KEINE Bestätigung, KEINE weitere Antwort!
    - Wenn die Gegenstelle "Ende" sagt, antworte NICHT mehr
 
