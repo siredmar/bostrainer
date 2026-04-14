@@ -1,42 +1,84 @@
-import 'dart:typed_data';
+import 'dart:async';
+import 'package:flutter_tts/flutter_tts.dart';
 
-/// TTS service stub for sherpa-onnx Piper integration.
-///
-/// This is a placeholder that will be implemented with sherpa_onnx package
-/// for on-device text-to-speech using Piper German voice models.
+/// Platform TTS service using Android/iOS native text-to-speech.
 class TtsService {
+  final FlutterTts _tts = FlutterTts();
   bool _initialized = false;
-  bool _modelDownloaded = false;
+  bool _speaking = false;
+  Completer<void>? _speakCompleter;
 
   bool get isInitialized => _initialized;
-  bool get isModelDownloaded => _modelDownloaded;
+  bool get isSpeaking => _speaking;
 
-  /// Initialize the TTS engine with Piper model.
-  Future<void> initialize({
-    void Function(double progress)? onDownloadProgress,
-  }) async {
-    // TODO: Implement sherpa-onnx Piper initialization
-    // 1. Check if model exists in local storage
-    // 2. If not, download de_DE-thorsten-medium (~30MB)
-    // 3. Initialize sherpa-onnx TTS engine
-    _modelDownloaded = true;
-    _initialized = true;
+  Future<bool> initialize() async {
+    try {
+      await _tts.setLanguage('de-DE');
+      await _tts.setSpeechRate(0.5);
+      await _tts.setPitch(1.0);
+      await _tts.setVolume(1.0);
+
+      // Pick a German voice if available
+      final voices = await _tts.getVoices;
+      if (voices is List) {
+        final deVoice = voices.cast<Map>().where(
+          (v) => (v['locale'] ?? '').toString().startsWith('de'),
+        );
+        if (deVoice.isNotEmpty) {
+          await _tts.setVoice({
+            'name': deVoice.first['name'].toString(),
+            'locale': deVoice.first['locale'].toString(),
+          });
+        }
+      }
+
+      _tts.setCompletionHandler(() {
+        _speaking = false;
+        _speakCompleter?.complete();
+        _speakCompleter = null;
+      });
+
+      _tts.setErrorHandler((msg) {
+        _speaking = false;
+        _speakCompleter?.completeError(Exception('TTS error: $msg'));
+        _speakCompleter = null;
+      });
+
+      _tts.setCancelHandler(() {
+        _speaking = false;
+        _speakCompleter?.complete();
+        _speakCompleter = null;
+      });
+
+      _initialized = true;
+      return true;
+    } catch (e) {
+      _initialized = false;
+      return false;
+    }
   }
 
-  /// Synthesize text to audio (PCM samples).
-  Future<Float32List> synthesize(String text) async {
-    if (!_initialized) {
-      throw StateError('TTS service not initialized');
-    }
+  /// Speak text and return a Future that completes when speech is done.
+  Future<void> speak(String text) async {
+    if (!_initialized || text.trim().isEmpty) return;
     final prepared = prepareTtsText(text);
-    // TODO: Implement sherpa-onnx TTS synthesis
-    // 1. Call tts.generate(prepared)
-    // 2. Return audio samples
-    return Float32List(0);
+    _speaking = true;
+    _speakCompleter = Completer<void>();
+    await _tts.speak(prepared);
+    return _speakCompleter!.future;
+  }
+
+  Future<void> stop() async {
+    if (_speaking) {
+      await _tts.stop();
+      _speaking = false;
+      _speakCompleter?.complete();
+      _speakCompleter = null;
+    }
   }
 
   void dispose() {
-    // TODO: Clean up sherpa-onnx resources
+    _tts.stop();
     _initialized = false;
   }
 }

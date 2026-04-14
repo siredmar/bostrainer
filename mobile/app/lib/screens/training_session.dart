@@ -5,6 +5,7 @@ import '../models/session.dart';
 import '../services/api_service.dart';
 import '../services/settings_service.dart';
 import '../services/stt_service.dart';
+import '../services/tts_service.dart';
 import '../widgets/ptt_button.dart';
 import '../widgets/transcript_list.dart';
 import 'evaluation.dart';
@@ -23,10 +24,12 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
   final List<ChatMessage> _messages = [];
   final TextEditingController _textController = TextEditingController();
   final SttService _stt = SttService();
+  final TtsService _tts = TtsService();
   bool _isLoading = true;
   bool _isSending = false;
   bool _isListening = false;
   bool _isTranscribing = false;
+  bool _isSpeaking = false;
   String? _error;
   String? _sttError;
   String _partialText = '';
@@ -36,6 +39,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
     super.initState();
     _startSession();
     _initStt();
+    _initTts();
   }
 
   Future<void> _initStt() async {
@@ -46,6 +50,10 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
         _sttError = _stt.error ?? 'Spracherkennung nicht verfügbar';
       }
     });
+  }
+
+  Future<void> _initTts() async {
+    await _tts.initialize();
   }
 
   Future<void> _startSession() async {
@@ -65,9 +73,12 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
   }
 
   void _onPttStart() {
-    if (!_stt.isInitialized || _isSending) return;
+    if (!_stt.isInitialized || _isSending || _isSpeaking) return;
+    // Stop TTS if still speaking
+    _tts.stop();
     setState(() {
       _isListening = true;
+      _isSpeaking = false;
       _partialText = '';
       _sttError = null;
     });
@@ -130,6 +141,19 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
         }
         _isSending = false;
       });
+
+      // Speak AI reply if voice output is enabled
+      if (result.reply.isNotEmpty &&
+          mounted &&
+          context.read<SettingsService>().useVoiceOutput) {
+        setState(() => _isSpeaking = true);
+        try {
+          await _tts.speak(result.reply);
+        } catch (_) {
+          // TTS errors are non-fatal
+        }
+        if (mounted) setState(() => _isSpeaking = false);
+      }
     } catch (e) {
       setState(() {
         _isSending = false;
@@ -187,6 +211,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
   void dispose() {
     _textController.dispose();
     _stt.dispose();
+    _tts.dispose();
     if (_session != null) {
       context.read<ApiService>().deleteSession(_session!.sessionId);
     }
@@ -268,6 +293,27 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
                         isTyping: _isSending,
                       ),
                     ),
+                    // Speaking indicator
+                    if (_isSpeaking)
+                      Container(
+                        width: double.infinity,
+                        color: Colors.blue.shade900.withValues(alpha: 0.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(
+                              width: 16, height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              '🔊 KI spricht...',
+                              style: TextStyle(fontSize: 13, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
                     // Input area — switches based on setting
                     if (useVoice)
                       Container(
@@ -284,7 +330,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
                             onPressEnd: _onPttEnd,
                             isListening: _isListening,
                             isTranscribing: _isTranscribing,
-                            isDisabled: _isSending || _isTranscribing || !_stt.isInitialized,
+                            isDisabled: _isSending || _isTranscribing || _isSpeaking || !_stt.isInitialized,
                             partialText: _partialText,
                           ),
                         ),
@@ -292,7 +338,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
                     else
                       _TextInputBar(
                         controller: _textController,
-                        isSending: _isSending,
+                        isSending: _isSending || _isSpeaking,
                         onSend: _sendMessage,
                       ),
                   ],

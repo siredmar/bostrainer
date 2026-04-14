@@ -99,6 +99,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
           ),
+          const SizedBox(height: 24),
+          // --- Output mode section ---
+          Text(
+            'Ausgabemodus',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Consumer<SettingsService>(
+            builder: (context, settings, _) {
+              return Column(
+                children: [
+                  _InputModeCard(
+                    icon: Icons.volume_up,
+                    title: 'Sprachausgabe',
+                    subtitle: 'KI-Antworten werden vorgelesen — nutzt die Sprachausgabe des Geräts',
+                    selected: settings.outputMode == OutputMode.voice,
+                    onTap: () => settings.setOutputMode(OutputMode.voice),
+                  ),
+                  const SizedBox(height: 8),
+                  _InputModeCard(
+                    icon: Icons.text_fields,
+                    title: 'Textausgabe',
+                    subtitle: 'KI-Antworten nur als Text anzeigen',
+                    selected: settings.outputMode == OutputMode.text,
+                    onTap: () => settings.setOutputMode(OutputMode.text),
+                  ),
+                ],
+              );
+            },
+          ),
           const SizedBox(height: 32),
           // --- Server section ---
           Text(
