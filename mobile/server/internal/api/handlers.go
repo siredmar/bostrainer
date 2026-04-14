@@ -158,8 +158,12 @@ func (h *Handler) sendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("[%s] Received message (raw): %q", sessionID, req.Text)
+
 	// "Ende" means conversation is over — no AI response needed per BOS protocol
 	trimmed := strings.TrimSpace(req.Text)
+	// STT engines often append punctuation — strip trailing dots, commas, etc.
+	trimmed = strings.TrimRight(trimmed, ".,;:!? ")
 	if strings.HasSuffix(strings.ToLower(trimmed), "ende") {
 		sess.AddMessage("user", req.Text)
 		evalResult := h.generateEvaluation(sessionID, sess)

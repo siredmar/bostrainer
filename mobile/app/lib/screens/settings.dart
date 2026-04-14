@@ -64,53 +64,135 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Servereinstellungen')),
-      body: Padding(
+      appBar: AppBar(title: const Text('Einstellungen')),
+      body: ListView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Verbindung zum BOSTrainer-Server konfigurieren:',
-              style: TextStyle(fontSize: 14),
+        children: [
+          // --- Input mode section ---
+          Text(
+            'Eingabemodus',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Consumer<SettingsService>(
+            builder: (context, settings, _) {
+              return Column(
+                children: [
+                  _InputModeCard(
+                    icon: Icons.mic,
+                    title: 'Spracheingabe (PTT)',
+                    subtitle: 'Gedrückt halten zum Sprechen — nutzt die Spracherkennung des Geräts',
+                    selected: settings.inputMode == InputMode.voice,
+                    onTap: () => settings.setInputMode(InputMode.voice),
+                  ),
+                  const SizedBox(height: 8),
+                  _InputModeCard(
+                    icon: Icons.keyboard,
+                    title: 'Texteingabe',
+                    subtitle: 'Funksprüche per Tastatur eingeben',
+                    selected: settings.inputMode == InputMode.text,
+                    onTap: () => settings.setInputMode(InputMode.text),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 32),
+          // --- Server section ---
+          Text(
+            'Serververbindung',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Verbindung zum BOSTrainer-Server konfigurieren:',
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _hostController,
+            decoration: const InputDecoration(
+              labelText: 'Host / IP-Adresse',
+              hintText: 'z.B. 192.168.1.100',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.dns),
             ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _hostController,
-              decoration: const InputDecoration(
-                labelText: 'Host / IP-Adresse',
-                hintText: 'z.B. 192.168.1.100',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.dns),
-              ),
-              keyboardType: TextInputType.url,
+            keyboardType: TextInputType.url,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _portController,
+            decoration: const InputDecoration(
+              labelText: 'Port',
+              hintText: 'z.B. 8080',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.numbers),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _portController,
-              decoration: const InputDecoration(
-                labelText: 'Port',
-                hintText: 'z.B. 8080',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.numbers),
-              ),
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _isSaving ? null : _save,
-              icon: _isSaving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save),
-              label: const Text('Speichern'),
-            ),
-          ],
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: _isSaving ? null : _save,
+            icon: _isSaving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.save),
+            label: const Text('Speichern'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InputModeCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _InputModeCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: selected
+          ? Theme.of(context).colorScheme.primaryContainer
+          : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: selected
+            ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
+            : BorderSide.none,
+      ),
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: selected
+              ? Theme.of(context).colorScheme.primary
+              : null,
         ),
+        title: Text(title),
+        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+        trailing: selected
+            ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
+            : null,
+        onTap: onTap,
       ),
     );
   }

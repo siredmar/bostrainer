@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../models/scenario.dart';
 import '../models/session.dart';
 import '../services/api_service.dart';
+import '../services/settings_service.dart';
+import '../services/stt_service.dart';
 import '../widgets/ptt_button.dart';
 import '../widgets/transcript_list.dart';
 import 'evaluation.dart';
@@ -20,14 +22,30 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
   Session? _session;
   final List<ChatMessage> _messages = [];
   final TextEditingController _textController = TextEditingController();
+  final SttService _stt = SttService();
   bool _isLoading = true;
   bool _isSending = false;
+  bool _isListening = false;
+  bool _isTranscribing = false;
   String? _error;
+  String? _sttError;
+  String _partialText = '';
 
   @override
   void initState() {
     super.initState();
     _startSession();
+    _initStt();
+  }
+
+  Future<void> _initStt() async {
+    final ok = await _stt.initialize();
+    if (!mounted) return;
+    setState(() {
+      if (!ok) {
+        _sttError = _stt.error ?? 'Spracherkennung nicht verfügbar';
+      }
+    });
   }
 
   Future<void> _startSession() async {
@@ -46,21 +64,54 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
     }
   }
 
+  void _onPttStart() {
+    if (!_stt.isInitialized || _isSending) return;
+    setState(() {
+      _isListening = true;
+      _partialText = '';
+      _sttError = null;
+    });
+    _stt.startListening(
+      onResult: (text, isFinal) {
+        setState(() {
+          _partialText = text;
+        });
+      },
+    );
+  }
+
+  Future<void> _onPttEnd() async {
+    if (!_isListening) return;
+    setState(() {
+      _isListening = false;
+      _isTranscribing = true;
+    });
+
+    final text = await _stt.stopListening();
+    if (!mounted) return;
+
+    setState(() => _isTranscribing = false);
+
+    if (text.trim().isNotEmpty) {
+      _sendMessage(text.trim());
+    }
+  }
+
   Future<void> _sendMessage(String text) async {
-    if (text.trim().isEmpty || _session == null || _isSending) return;
+    if (text.isEmpty || _session == null || _isSending) return;
 
     setState(() {
-      _messages.add(ChatMessage(role: 'user', text: text.trim()));
+      _messages.add(ChatMessage(role: 'user', text: text));
       _isSending = true;
+      _partialText = '';
     });
     _textController.clear();
 
     try {
       final api = context.read<ApiService>();
-      final result = await api.sendMessage(_session!.sessionId, text.trim());
+      final result = await api.sendMessage(_session!.sessionId, text);
 
       if (result.evaluation != null) {
-        // "Ende" was detected — show evaluation
         if (!mounted) return;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
@@ -135,6 +186,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
   @override
   void dispose() {
     _textController.dispose();
+    _stt.dispose();
     if (_session != null) {
       context.read<ApiService>().deleteSession(_session!.sessionId);
     }
@@ -143,6 +195,8 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final useVoice = context.watch<SettingsService>().useVoiceInput;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.scenario.name, overflow: TextOverflow.ellipsis),
@@ -157,12 +211,56 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text('Fehler: $_error'))
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Fehler: $_error', textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        FilledButton(
+                          onPressed: () {
+                            setState(() { _error = null; _isLoading = true; });
+                            _startSession();
+                          },
+                          child: const Text('Erneut versuchen'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
               : Column(
                   children: [
                     // Briefing card
                     if (_session != null && _messages.isEmpty)
                       _BriefingCard(session: _session!),
+                    // STT error banner (only in voice mode)
+                    if (useVoice && _sttError != null)
+                      Container(
+                        width: double.infinity,
+                        color: Colors.orange.shade900,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning, size: 18, color: Colors.white),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _sttError!,
+                                style: const TextStyle(fontSize: 12, color: Colors.white),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setState(() => _sttError = null);
+                                _initStt();
+                              },
+                              child: const Text('Retry', style: TextStyle(fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                      ),
                     // Transcript
                     Expanded(
                       child: TranscriptList(
@@ -170,15 +268,33 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
                         isTyping: _isSending,
                       ),
                     ),
-                    // Input area
-                    _InputBar(
-                      controller: _textController,
-                      isSending: _isSending,
-                      onSend: _sendMessage,
-                      onPtt: () {
-                        // TODO: PTT recording - Phase 3
-                      },
-                    ),
+                    // Input area — switches based on setting
+                    if (useVoice)
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          border: Border(
+                            top: BorderSide(color: Colors.grey.shade800),
+                          ),
+                        ),
+                        child: SafeArea(
+                          child: PttButton(
+                            onPressStart: _onPttStart,
+                            onPressEnd: _onPttEnd,
+                            isListening: _isListening,
+                            isTranscribing: _isTranscribing,
+                            isDisabled: _isSending || _isTranscribing || !_stt.isInitialized,
+                            partialText: _partialText,
+                          ),
+                        ),
+                      )
+                    else
+                      _TextInputBar(
+                        controller: _textController,
+                        isSending: _isSending,
+                        onSend: _sendMessage,
+                      ),
                   ],
                 ),
     );
@@ -240,17 +356,15 @@ class _BriefingCard extends StatelessWidget {
   }
 }
 
-class _InputBar extends StatelessWidget {
+class _TextInputBar extends StatelessWidget {
   final TextEditingController controller;
   final bool isSending;
   final ValueChanged<String> onSend;
-  final VoidCallback onPtt;
 
-  const _InputBar({
+  const _TextInputBar({
     required this.controller,
     required this.isSending,
     required this.onSend,
-    required this.onPtt,
   });
 
   @override
@@ -266,10 +380,6 @@ class _InputBar extends StatelessWidget {
       child: SafeArea(
         child: Row(
           children: [
-            // PTT button (placeholder for Phase 3)
-            PttButton(onPressed: onPtt),
-            const SizedBox(width: 8),
-            // Text input (for text-only mode)
             Expanded(
               child: TextField(
                 controller: controller,
