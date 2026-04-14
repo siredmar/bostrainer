@@ -1,4 +1,4 @@
-# Copilot Instructions for BOSTrainer
+# AGENTS.md 
 
 ## Project Overview
 
