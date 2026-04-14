@@ -146,9 +146,19 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
       if (result.reply.isNotEmpty &&
           mounted &&
           context.read<SettingsService>().useVoiceOutput) {
+        final settings = context.read<SettingsService>();
         setState(() => _isSpeaking = true);
         try {
-          await _tts.speak(result.reply);
+          if (settings.radioFilterEnabled || settings.radioNoiseEnabled) {
+            await _tts.speakWithRadioEffect(
+              result.reply,
+              bandpassEnabled: settings.radioFilterEnabled,
+              noiseEnabled: settings.radioNoiseEnabled,
+              noiseDb: settings.radioNoiseDb,
+            );
+          } else {
+            await _tts.speakDirect(result.reply);
+          }
         } catch (_) {
           // TTS errors are non-fatal
         }

@@ -132,6 +132,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           const SizedBox(height: 32),
+          // --- Radio filter section ---
+          Text(
+            'Funkeffekt',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Simuliert den Klang eines BOS-Funkgeräts bei der Sprachausgabe.',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          Consumer<SettingsService>(
+            builder: (context, settings, _) {
+              return Column(
+                children: [
+                  SwitchListTile(
+                    title: const Text('Bandpassfilter (300–3000 Hz)'),
+                    subtitle: const Text('Typischer Funk-Frequenzbereich'),
+                    value: settings.radioFilterEnabled,
+                    onChanged: (v) => settings.setRadioFilter(v),
+                    secondary: const Icon(Icons.graphic_eq),
+                  ),
+                  SwitchListTile(
+                    title: const Text('Weißes Rauschen'),
+                    subtitle: Text('${settings.radioNoiseDb.round()} dB'),
+                    value: settings.radioNoiseEnabled,
+                    onChanged: (v) => settings.setRadioNoise(v),
+                    secondary: const Icon(Icons.noise_aware),
+                  ),
+                  if (settings.radioNoiseEnabled)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          const Text('-60 dB', style: TextStyle(fontSize: 12)),
+                          Expanded(
+                            child: Slider(
+                              value: settings.radioNoiseDb,
+                              min: -60.0,
+                              max: -10.0,
+                              divisions: 50,
+                              label: '${settings.radioNoiseDb.round()} dB',
+                              onChanged: (v) => settings.setRadioNoiseDb(v),
+                            ),
+                          ),
+                          const Text('-10 dB', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 32),
           // --- Server section ---
           Text(
             'Serververbindung',

@@ -9,6 +9,9 @@ class SettingsService extends ChangeNotifier {
   static const _keyPort = 'server_port';
   static const _keyInputMode = 'input_mode';
   static const _keyOutputMode = 'output_mode';
+  static const _keyRadioFilter = 'radio_filter';
+  static const _keyRadioNoise = 'radio_noise';
+  static const _keyRadioNoiseDb = 'radio_noise_db';
   static const defaultHost = '192.168.1.100';
   static const defaultPort = 8080;
 
@@ -16,6 +19,9 @@ class SettingsService extends ChangeNotifier {
   int _port = defaultPort;
   InputMode _inputMode = InputMode.voice;
   OutputMode _outputMode = OutputMode.voice;
+  bool _radioFilterEnabled = true;
+  bool _radioNoiseEnabled = true;
+  double _radioNoiseDb = -35.0;
   bool _loaded = false;
 
   String get host => _host;
@@ -24,6 +30,9 @@ class SettingsService extends ChangeNotifier {
   OutputMode get outputMode => _outputMode;
   bool get useVoiceInput => _inputMode == InputMode.voice;
   bool get useVoiceOutput => _outputMode == OutputMode.voice;
+  bool get radioFilterEnabled => _radioFilterEnabled;
+  bool get radioNoiseEnabled => _radioNoiseEnabled;
+  double get radioNoiseDb => _radioNoiseDb;
   bool get isLoaded => _loaded;
   String get baseUrl => 'http://$_host:$_port';
 
@@ -35,6 +44,9 @@ class SettingsService extends ChangeNotifier {
     _inputMode = modeStr == 'text' ? InputMode.text : InputMode.voice;
     final outStr = prefs.getString(_keyOutputMode) ?? 'voice';
     _outputMode = outStr == 'text' ? OutputMode.text : OutputMode.voice;
+    _radioFilterEnabled = prefs.getBool(_keyRadioFilter) ?? true;
+    _radioNoiseEnabled = prefs.getBool(_keyRadioNoise) ?? true;
+    _radioNoiseDb = prefs.getDouble(_keyRadioNoiseDb) ?? -35.0;
     _loaded = true;
     notifyListeners();
   }
@@ -61,6 +73,29 @@ class SettingsService extends ChangeNotifier {
     _outputMode = mode;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyOutputMode, mode == OutputMode.text ? 'text' : 'voice');
+    notifyListeners();
+  }
+
+  Future<void> setRadioFilter(bool enabled) async {
+    if (_radioFilterEnabled == enabled) return;
+    _radioFilterEnabled = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyRadioFilter, enabled);
+    notifyListeners();
+  }
+
+  Future<void> setRadioNoise(bool enabled) async {
+    if (_radioNoiseEnabled == enabled) return;
+    _radioNoiseEnabled = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyRadioNoise, enabled);
+    notifyListeners();
+  }
+
+  Future<void> setRadioNoiseDb(double db) async {
+    _radioNoiseDb = db;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_keyRadioNoiseDb, db);
     notifyListeners();
   }
 }
