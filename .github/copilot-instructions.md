@@ -4,99 +4,98 @@
 
 BOSTrainer is a voice-based interactive training simulator for German BOS (Behörden und Organisationen mit Sicherheitsaufgaben) radio communication, specifically for Bavarian volunteer fire departments. Users practice realistic radio scenarios via push-to-talk, with AI-powered counterparts (dispatch center, incident commander, crews) responding according to strict BOS radio protocols.
 
+## Build, Test, and Lint
+
+All Go commands run from the `server/` directory. The Makefile wraps these:
+
+```bash
+make build          # Build server binary
+make test           # Run all Go tests: cd server && go test -v ./...
+make lint           # Format + vet (+ golangci-lint if installed)
+make fmt            # go fmt ./...
+make vet            # go vet ./...
+make tidy           # go mod tidy
+
+# Run a single test
+cd server && go test -v -run TestFunctionName ./internal/package/
+
+# Docker
+make docker-up      # docker-compose up --build (foreground)
+make docker-up-d    # detached
+make docker-down    # stop
+```
+
+**Note:** There are no Go tests yet. The test infrastructure exists but test files need to be created.
+
 ## Architecture
 
-The project has two main components:
+**Server (Go)** — `server/`: Handles all AI/TTS processing. Clients communicate via WebSocket on `/ws`. Static files served from `client/` on `/`.
 
-### Server (Go) - `server/`
-Handles all AI/TTS processing. Clients communicate via WebSocket.
+- `cmd/server/main.go` — Entry point. Wires up Gemini client, TTS provider, scenario loader, and WebSocket hub.
+- `internal/gemini/` — Gemini API client using raw HTTP REST (no SDK). Uses `gemini-2.5-flash` model, temperature 0.7.
+- `internal/tts/` — TTS provider interface with two implementations: Google Translate TTS (`edge`) and Gemini TTS (`gemini`). Selected via `TTS_PROVIDER` env var.
+- `internal/session/` — Per-client session state with mutex-protected conversation history.
+- `internal/scenario/` — Scenario definitions (hardcoded in Go) and prompt file loading.
+- `internal/websocket/` — Hub (client registry) + Client (message handling, audio pipeline).
 
-```
-server/
-├── cmd/server/main.go      # Entry point
-└── internal/
-    ├── gemini/             # Gemini API client (audio + text)
-    ├── tts/                # Edge TTS wrapper
-    ├── session/            # Per-client session state
-    ├── scenario/           # Scenario loading
-    └── websocket/          # WebSocket handler + protocol
-```
+**Client (HTML5)** — `client/`: Lightweight web app handling audio I/O only. Push-to-talk via MediaRecorder, audio sent as base64 over WebSocket.
 
-### Client (HTML5) - `client/`
-Lightweight web app handling audio I/O only.
+**Legacy POC (Python)** — `src/`: Original CLI-based prototype. Kept for reference only.
 
-```
-client/
-├── index.html              # UI structure
-├── app.js                  # WebSocket + MediaRecorder
-└── style.css               # Styling
-```
+## Environment Variables
 
-### Legacy POC (Python) - `src/`
-Original CLI-based prototype. Kept for reference.
-
-## Running the Application
-
-### Option 1: Docker (recommended)
-```bash
-export GEMINI_API_KEY="your-key"
-docker-compose up --build
-# Open http://localhost:8080
-```
-
-### Option 2: Local Development
-```bash
-# Server (requires Go 1.22+, ffmpeg, edge-tts)
-cd server
-pip install edge-tts  # or: pipx install edge-tts
-export GEMINI_API_KEY="your-key"
-go run ./cmd/server
-
-# Open http://localhost:8080
-```
-
-### Option 3: Legacy Python POC
-```bash
-pip install -r requirements.txt
-export GEMINI_API_KEY="your-key"
-python src/main.py
-```
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GEMINI_API_KEY` | Yes | — | Google Gemini API key |
+| `TTS_PROVIDER` | No | `edge` | TTS backend: `edge` (Google Translate) or `gemini` |
+| `PORT` | No | `8080` | HTTP server port |
+| `PROMPTS_DIR` | No | `../prompts` | Path to prompts directory |
+| `CLIENT_DIR` | No | `../client` | Path to client static files |
 
 ## WebSocket Protocol
 
-Client ↔ Server communication:
+Client ↔ Server communication uses JSON messages:
 
-```json
-// Client → Server
-{ "type": "list_scenarios" }
-{ "type": "start_session", "scenario_key": "1" }
-{ "type": "audio", "data": "<base64 audio>" }
-{ "type": "end_session" }
-
-// Server → Client  
-{ "type": "scenarios", "scenarios": [...] }
-{ "type": "session_started", "briefing": "...", "user_role": "...", "ai_role": "..." }
-{ "type": "response", "transcript": "...", "reply": "...", "audio": "<base64 WAV>" }
-{ "type": "evaluation", "analysis": "..." }
-{ "type": "error", "message": "..." }
+```
+Client → Server:  list_scenarios | start_session (scenario_key) | audio (base64 data) | end_session
+Server → Client:  scenarios | session_started (briefing, user_role, ai_role) | response (transcript, reply, audio) | evaluation | status | error
 ```
 
-## Prompt System
+## Key Conventions
 
-Prompts are assembled from multiple files in `prompts/`:
-- `base_rules.txt` – Core BOS radio rules (FwDV 810)
-- `scenarios/*.txt` – Scenario-specific context (roles, typical flow)
-- Variant files for randomized scenarios (e.g., `truppfuehrer_*.txt`)
+### Gemini Audio Response Format
+Gemini returns audio transcription + reply in a structured text format that gets parsed:
+```
+TRANSKRIPT: <verbatim transcription>
+ANTWORT: <radio response>
+```
+This is parsed by `parseAudioResponse()` in `internal/gemini/client.go`.
 
-Assembly order: `scenario_prompt + [variant_prompt] + base_rules`
-
-## Code Conventions
+### TTS Text Preprocessing
+Before sending text to TTS, `PrepareTTSText()` in `internal/tts/service.go`:
+1. Sanitizes markdown and control characters
+2. Converts radio call signs (`47/1` → `47 1`, `47/1-1` → `47 1 1`) for natural speech
+3. Fixes compound word pronunciation (e.g., `Angriffstrupp` → `Angriffs-Trupp`) because TTS engines mispronounce "strupp" as "schtrupp"
 
 ### Audio Format
-All audio: 16kHz sample rate, mono, 16-bit signed integer (WAV).
+All audio output: WAV format. Edge TTS returns MP3 (sent as-is). Gemini TTS returns raw PCM wrapped to WAV (24kHz, mono, 16-bit). Client sends browser-native format (typically WebM); Gemini auto-detects MIME type.
 
-### German Language
-All user-facing strings, prompts, and radio content are in German. Code and comments in English.
+### Language
+All user-facing strings, prompts, and radio content are in **German**. Code and comments in **English**.
+
+### Scenario System
+Scenarios are defined as Go structs in `internal/scenario/scenario.go` across three categories:
+- **Einsatz-Szenarien** — Interactive fire operation scenarios (user plays a role)
+- **DMO-Übungen** — 40 structured radio exercises for practice
+- **Demos** — Listen-only scenarios where AI plays all roles
+
+Some scenarios use **variant files** (e.g., `truppfuehrer_*.txt`) randomly selected at session start for replayability.
+
+### Prompt Assembly
+System prompts are assembled from files in `prompts/`:
+1. Scenario-specific prompt (`scenarios/<file>.txt`)
+2. Optional variant prompt (randomly chosen from `VariantFiles`)
+3. Base rules (`base_rules.txt` — core BOS/FwDV 810 radio protocol)
 
 ## Domain Knowledge
 
