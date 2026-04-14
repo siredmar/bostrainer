@@ -1,0 +1,15 @@
+services:
+  bridge:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=8080
+      - PROMPTS_DIR=/prompts
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+    volumes:
+      - ../prompts:/prompts:ro
+    restart: unless-stopped

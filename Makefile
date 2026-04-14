@@ -70,3 +70,8 @@ docker-logs: ## Tail docker-compose logs
 docker-clean: docker-down ## Stop and remove volumes
 	docker-compose down -v
 	docker rmi siredamr/bostrainer 2>/dev/null || true
+
+# ── Mobile (delegates to mobile/Makefile) ──────────────────────────
+
+mobile-%: ## Mobile targets (run 'make -C mobile help' for details)
+	$(MAKE) -C mobile $(*)

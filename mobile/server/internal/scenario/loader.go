@@ -10,24 +10,23 @@ import (
 
 // Scenario defines a training scenario.
 type Scenario struct {
-	Key              string
-	Name             string
-	Description      string
-	UserRole         string
-	AIRole           string
-	PromptFile       string
-	Briefing         string
-	FirstMessageHint string
-	VariantFiles     []string
-	IsDemo           bool   // Demo mode: AI plays all roles, user just listens
-	Category         string // Category for grouping (empty = "Einsatz-Szenarien")
+	Key              string `json:"key"`
+	Name             string `json:"name"`
+	Description      string `json:"description"`
+	UserRole         string `json:"user_role"`
+	AIRole           string `json:"ai_role"`
+	PromptFile       string `json:"-"`
+	Briefing         string `json:"briefing"`
+	FirstMessageHint string `json:"first_hint"`
+	VariantFiles     []string `json:"-"`
+	IsDemo           bool   `json:"is_demo"`
+	Category         string `json:"category"`
 }
 
-// Category constants
 const (
-	CategoryEinsatz = "Einsatz-Szenarien"                // Interactive scenarios
-	CategoryDMO     = "Sprechfunkübungen im DMO-Betrieb" // DMO exercises
-	CategoryDemo    = "Demos"                            // Demo scenarios (listen only)
+	CategoryEinsatz = "Einsatz-Szenarien"
+	CategoryDMO     = "Sprechfunkübungen im DMO-Betrieb"
+	CategoryDemo    = "Demos"
 )
 
 // Loader loads scenarios from the prompts directory.
@@ -43,8 +42,7 @@ func NewLoader(promptsDir string) *Loader {
 // GetScenarios returns all available scenarios.
 func (l *Loader) GetScenarios() []*Scenario {
 	scenarios := []*Scenario{}
-	standard_szenarios := []*Scenario{
-		// === EINSATZ-SZENARIEN ===
+	standardSzenarios := []*Scenario{
 		{
 			Key:         "1",
 			Name:        "Fahrzeug ↔ Leitstelle",
@@ -98,7 +96,7 @@ Deine Aufgabe: Gib dem Angriffstrupp einen Einsatzbefehl
 			AIRole:      "Florian Birkach 47/1 (Gruppenführer)",
 			PromptFile:  "truppfuehrer_base.txt",
 			Category:    CategoryEinsatz,
-			Briefing:    "", // Set dynamically based on variant
+			Briefing:    "",
 			FirstMessageHint: `💡 Erster Funkspruch z.B.:
    "Florian Birkach 47/1 von Angriffstrupp, unter Atemschutz angemeldet, einsatzbereit, kommen"`,
 			VariantFiles: []string{
@@ -111,8 +109,7 @@ Deine Aufgabe: Gib dem Angriffstrupp einen Einsatzbefehl
 		},
 	}
 
-	demo_szenarios := []*Scenario{
-		// === DEMO-SZENARIEN ===
+	demoSzenarios := []*Scenario{
 		{
 			Key:         "demo1",
 			Name:        "🎧 Demo: Wasserförderung Schlauchplatzer",
@@ -135,11 +132,11 @@ Beobachte, wie die Maschinisten das Problem kommunizieren und lösen.`,
 			IsDemo:           true,
 		},
 	}
-	// === DMO-ÜBUNGEN (40 Aufgaben) ===
+
 	dmoExercises := l.getDMOExercises()
 	scenarios = append(scenarios, dmoExercises...)
-	scenarios = append(scenarios, standard_szenarios...)
-	scenarios = append(scenarios, demo_szenarios...)
+	scenarios = append(scenarios, standardSzenarios...)
+	scenarios = append(scenarios, demoSzenarios...)
 
 	return scenarios
 }
@@ -148,28 +145,28 @@ Beobachte, wie die Maschinisten das Problem kommunizieren und lösen.`,
 func (l *Loader) getDMOExercises() []*Scenario {
 	return []*Scenario{
 		{Key: "dmo-01", Name: "1. Standort erfragen", Description: "Fragen Sie die Gegenstelle nach dem Standort",
-			UserRole: "Übungsteilnehmer", AIRole: "Gegenstelle", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_01.txt"}, Category: CategoryDMO,
+			UserRole: "Schlauchtrupp", AIRole: "Angriffstrupp", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_01.txt"}, Category: CategoryDMO,
 			Briefing: "Aufgabe: Fragen Sie die Gegenstelle nach ihrem Standort.", FirstMessageHint: `"[Gegenstelle] von [Rufname], Frage: Standort, kommen"`},
 		{Key: "dmo-02", Name: "2. Eigenen Standort mitteilen", Description: "Teilen Sie der Gegenstelle Ihren Standort mit",
-			UserRole: "Übungsteilnehmer", AIRole: "Gegenstelle", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_02.txt"}, Category: CategoryDMO,
+			UserRole: "Angriffstrupp", AIRole: "Gruppenführer", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_02.txt"}, Category: CategoryDMO,
 			Briefing: "Aufgabe: Teilen Sie der Gegenstelle Ihren eigenen Standort mit.", FirstMessageHint: `"[Gegenstelle] von [Rufname], mein Standort: [Ort], kommen"`},
 		{Key: "dmo-03", Name: "3. Lautstärke-Durchsage", Description: "Durchsage an alle: Lautstärke prüfen",
-			UserRole: "Gruppenführer/Übungsleiter", AIRole: "Übungsteilnehmer", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_03.txt"}, Category: CategoryDMO,
+			UserRole: "Gruppenführer", AIRole: "Übungsteilnehmer", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_03.txt"}, Category: CategoryDMO,
 			Briefing: "Aufgabe: Geben Sie an die Gruppe die Durchsage, dass alle die Lautstärke prüfen sollen.", FirstMessageHint: `"An alle von [Rufname], überprüft die Lautstärke..."`},
 		{Key: "dmo-04", Name: "4. Verletzte Person gefunden", Description: "Melden Sie dem Staffelführer eine verletzte Person",
-			UserRole: "Angriffstruppführer TSF", AIRole: "Florian Birkach 44/1 (Staffelführer)", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_04.txt"}, Category: CategoryDMO,
+			UserRole: "Angriffstruppführer", AIRole: "Florian Birkach 44/1", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_04.txt"}, Category: CategoryDMO,
 			Briefing: "Aufgabe: Melden Sie als Angriffstruppführer, dass Sie eine verletzte Person gefunden haben.", FirstMessageHint: `"Florian Birkach 44/1 von Angriffstrupp, verletzte Person gefunden..."`},
 		{Key: "dmo-05", Name: "5. Gruppenwechsel anordnen", Description: "Ordnen Sie einen Gruppenwechsel mit Rückmeldung an",
 			UserRole: "Gruppenführer", AIRole: "Übungsteilnehmer", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_05.txt"}, Category: CategoryDMO,
 			Briefing: "Aufgabe: Ordnen Sie einen Gruppenwechsel in 1 Minute an und fordern Sie Rückmeldung.", FirstMessageHint: `"An alle von [Rufname], Gruppenwechsel auf [Gruppe] in einer Minute..."`},
 		{Key: "dmo-06", Name: "6. Kennwort Rotes Kreuz", Description: "Fragen Sie nach dem Kennwort für das Rote Kreuz",
-			UserRole: "Übungsteilnehmer", AIRole: "Gegenstelle", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_06.txt"}, Category: CategoryDMO,
+			UserRole: "Angriffstrupp", AIRole: "Leitstelle", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_06.txt"}, Category: CategoryDMO,
 			Briefing: "Aufgabe: Fragen Sie nach dem Kennwort für das Rote Kreuz.", FirstMessageHint: `"[Gegenstelle] von [Rufname], Frage: Kennwort für das Rote Kreuz, kommen"`},
 		{Key: "dmo-07", Name: "7. Rauchentwicklung - Rückfrage", Description: "Starke Rauchentwicklung ohne PA - soll ich weiter vorgehen?",
-			UserRole: "Trupp (ohne PA)", AIRole: "Florian Birkach 44/1 (Staffelführer)", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_07.txt"}, Category: CategoryDMO,
+			UserRole: "Angriffstrupp", AIRole: "Florian Birkach 44/1", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_07.txt"}, Category: CategoryDMO,
 			Briefing: "Aufgabe: Sie sind ohne PA im Gebäude und stellen starke Rauchentwicklung fest. Fragen Sie, ob Sie weiter vorgehen sollen.", FirstMessageHint: `"Florian Birkach 44/1 von [Trupp], starke Rauchentwicklung, sollen wir weiter vorgehen..."`},
 		{Key: "dmo-08", Name: "8. Ordnungskennzahl TSF (buchstabieren)", Description: "Fragen Sie nach der Ordnungskennzahl für TSF und buchstabieren Sie",
-			UserRole: "Übungsteilnehmer", AIRole: "Gegenstelle", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_08.txt"}, Category: CategoryDMO,
+			UserRole: "Schlauchtrupp", AIRole: "Leitstelle", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_08.txt"}, Category: CategoryDMO,
 			Briefing: "Aufgabe: Fragen Sie nach der Ordnungskennzahl für ein TSF und buchstabieren Sie die Abkürzung.", FirstMessageHint: `"[Gegenstelle] von [Rufname], Frage: Ordnungskennzahl für Theodor Samuel Friedrich, kommen"`},
 		{Key: "dmo-09", Name: "9. Einsatzauftrag erfragen", Description: "Erkundigen Sie sich beim Einsatzleiter nach Ihrem Auftrag",
 			UserRole: "Staffelführer TSF", AIRole: "Florian Birkach 10/1 (Einsatzleiter)", PromptFile: "dmo_base.txt", VariantFiles: []string{"dmo_aufgabe_09.txt"}, Category: CategoryDMO,
@@ -296,7 +293,6 @@ func (l *Loader) LoadPrompt(s *Scenario) (string, error) {
 	parts = append(parts, string(baseRules))
 	parts = append(parts, string(scenarioPrompt))
 
-	// Add random variant if available
 	if len(s.VariantFiles) > 0 {
 		variantFile := s.VariantFiles[rand.Intn(len(s.VariantFiles))]
 		variantPrompt, err := os.ReadFile(filepath.Join(l.promptsDir, "scenarios", variantFile))
@@ -309,7 +305,7 @@ func (l *Loader) LoadPrompt(s *Scenario) (string, error) {
 	return strings.Join(parts, "\n\n"), nil
 }
 
-// LoadDemoPrompt loads the prompt for a demo scenario (no base rules needed).
+// LoadDemoPrompt loads the prompt for a demo scenario.
 func (l *Loader) LoadDemoPrompt(s *Scenario) (string, error) {
 	prompt, err := os.ReadFile(filepath.Join(l.promptsDir, "scenarios", s.PromptFile))
 	if err != nil {

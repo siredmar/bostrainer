@@ -9,6 +9,8 @@ build/
 server/main
 server/server
 server/testclient
+bostrainer
+mobile/bostrainer-bridge
 *.exe
 
 # Models (large files)

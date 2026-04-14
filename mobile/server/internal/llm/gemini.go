@@ -1,4 +1,4 @@
-package gemini
+package llm
 
 import (
 	"bytes"
@@ -18,16 +18,10 @@ const (
 	fallbackModel = "gemini-2.5-flash"
 )
 
-// Client is a Gemini API client.
+// Client is a text-only Gemini API client for the mobile bridge server.
 type Client struct {
 	apiKey     string
 	httpClient *http.Client
-}
-
-// Response holds the LLM response.
-type Response struct {
-	Transcript string
-	Reply      string
 }
 
 // NewClient creates a new Gemini client.
@@ -42,45 +36,18 @@ func NewClient() (*Client, error) {
 	}, nil
 }
 
-// audioInstruction is the prompt for audio transcription and response.
-const audioInstruction = `Der Nutzer sendet dir eine Audio-Aufnahme eines BOS-Funkspruchs. 
-Antworte im folgenden Format:
-TRANSKRIPT: <wortgetreue Transkription der Audio-Aufnahme>
-ANTWORT: <deine Funk-Antwort>`
-
-// SendAudio sends audio to Gemini and returns transcript + reply.
-// Supports WAV, WebM, OGG, MP3 formats.
-func (c *Client) SendAudio(ctx context.Context, systemPrompt string, history []Message, audioData []byte, mimeType string) (*Response, error) {
-	contents := buildContents(history)
-
-	// Detect MIME type if not provided
-	if mimeType == "" {
-		mimeType = detectAudioMimeType(audioData)
-	}
-
-	// Add audio message
-	contents = append(contents, Content{
-		Role: "user",
-		Parts: []Part{
-			{InlineData: &InlineData{MimeType: mimeType, Data: audioData}},
-			{Text: audioInstruction},
-		},
-	})
-
-	resp, err := c.generate(ctx, systemPrompt, contents, 2048)
-	if err != nil {
-		return nil, err
-	}
-
-	return parseAudioResponse(resp), nil
+// Message represents a conversation message.
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
 }
 
 // SendText sends a text message to Gemini.
 func (c *Client) SendText(ctx context.Context, systemPrompt string, history []Message, text string) (string, error) {
 	contents := buildContents(history)
-	contents = append(contents, Content{
+	contents = append(contents, content{
 		Role:  "user",
-		Parts: []Part{{Text: text}},
+		Parts: []part{{Text: text}},
 	})
 
 	return c.generate(ctx, systemPrompt, contents, 2048)
@@ -89,41 +56,26 @@ func (c *Client) SendText(ctx context.Context, systemPrompt string, history []Me
 // SendTextLong sends a text message with higher token limit (for evaluations).
 func (c *Client) SendTextLong(ctx context.Context, systemPrompt string, history []Message, text string) (string, error) {
 	contents := buildContents(history)
-	contents = append(contents, Content{
+	contents = append(contents, content{
 		Role:  "user",
-		Parts: []Part{{Text: text}},
+		Parts: []part{{Text: text}},
 	})
 
 	return c.generate(ctx, systemPrompt, contents, 8192)
 }
 
-// Message represents a conversation message.
-type Message struct {
-	Role    string
-	Content string
-}
-
-// Content represents a Gemini content block.
-type Content struct {
+type content struct {
 	Role  string `json:"role"`
-	Parts []Part `json:"parts"`
+	Parts []part `json:"parts"`
 }
 
-// Part represents a content part.
-type Part struct {
-	Text       string      `json:"text,omitempty"`
-	InlineData *InlineData `json:"inline_data,omitempty"`
-}
-
-// InlineData represents inline binary data.
-type InlineData struct {
-	MimeType string `json:"mime_type"`
-	Data     []byte `json:"data"`
+type part struct {
+	Text string `json:"text,omitempty"`
 }
 
 type generateRequest struct {
-	Contents          []Content         `json:"contents"`
-	SystemInstruction *Content          `json:"system_instruction,omitempty"`
+	Contents          []content         `json:"contents"`
+	SystemInstruction *content          `json:"system_instruction,omitempty"`
 	GenerationConfig  *generationConfig `json:"generationConfig,omitempty"`
 }
 
@@ -145,22 +97,22 @@ type generateResponse struct {
 	} `json:"error,omitempty"`
 }
 
-func buildContents(history []Message) []Content {
-	contents := make([]Content, 0, len(history))
+func buildContents(history []Message) []content {
+	contents := make([]content, 0, len(history))
 	for _, msg := range history {
 		role := "user"
 		if msg.Role == "assistant" {
 			role = "model"
 		}
-		contents = append(contents, Content{
+		contents = append(contents, content{
 			Role:  role,
-			Parts: []Part{{Text: msg.Content}},
+			Parts: []part{{Text: msg.Content}},
 		})
 	}
 	return contents
 }
 
-func (c *Client) generate(ctx context.Context, systemPrompt string, contents []Content, maxTokens int) (string, error) {
+func (c *Client) generate(ctx context.Context, systemPrompt string, contents []content, maxTokens int) (string, error) {
 	result, err := c.generateWithModel(ctx, primaryModel, systemPrompt, contents, maxTokens)
 	if err != nil {
 		log.Printf("Primary model (%s) failed: %v — trying fallback (%s)", primaryModel, err, fallbackModel)
@@ -173,7 +125,7 @@ func (c *Client) generate(ctx context.Context, systemPrompt string, contents []C
 	return result, nil
 }
 
-func (c *Client) generateWithModel(ctx context.Context, modelName string, systemPrompt string, contents []Content, maxTokens int) (string, error) {
+func (c *Client) generateWithModel(ctx context.Context, modelName string, systemPrompt string, contents []content, maxTokens int) (string, error) {
 	req := generateRequest{
 		Contents: contents,
 		GenerationConfig: &generationConfig{
@@ -183,8 +135,8 @@ func (c *Client) generateWithModel(ctx context.Context, modelName string, system
 	}
 
 	if systemPrompt != "" {
-		req.SystemInstruction = &Content{
-			Parts: []Part{{Text: systemPrompt}},
+		req.SystemInstruction = &content{
+			Parts: []part{{Text: systemPrompt}},
 		}
 	}
 
@@ -227,50 +179,40 @@ func (c *Client) generateWithModel(ctx context.Context, modelName string, system
 	return resp.Candidates[0].Content.Parts[0].Text, nil
 }
 
-func parseAudioResponse(raw string) *Response {
-	resp := &Response{
-		Transcript: "(nicht erkannt)",
-		Reply:      raw,
-	}
+// ExtractJSON extracts JSON from a response that may contain markdown code blocks.
+func ExtractJSON(response string) string {
+	cleaned := response
 
-	for _, line := range strings.Split(raw, "\n") {
-		upper := strings.ToUpper(strings.TrimSpace(line))
-		if strings.HasPrefix(upper, "TRANSKRIPT:") {
-			resp.Transcript = strings.TrimSpace(strings.SplitN(line, ":", 2)[1])
-		} else if strings.HasPrefix(upper, "ANTWORT:") {
-			resp.Reply = strings.TrimSpace(strings.SplitN(line, ":", 2)[1])
+	if idx := strings.Index(cleaned, "```json"); idx != -1 {
+		cleaned = cleaned[idx+7:]
+		if endIdx := strings.Index(cleaned, "```"); endIdx != -1 {
+			cleaned = cleaned[:endIdx]
+		}
+	} else if idx := strings.Index(cleaned, "```"); idx != -1 {
+		cleaned = cleaned[idx+3:]
+		if endIdx := strings.Index(cleaned, "```"); endIdx != -1 {
+			cleaned = cleaned[:endIdx]
 		}
 	}
 
-	return resp
-}
-
-// detectAudioMimeType detects the MIME type from audio data.
-func detectAudioMimeType(data []byte) string {
-	if len(data) < 12 {
-		return "audio/wav"
+	if startIdx := strings.Index(cleaned, "{"); startIdx != -1 {
+		braceCount := 0
+		endIdx := -1
+		for i := startIdx; i < len(cleaned); i++ {
+			if cleaned[i] == '{' {
+				braceCount++
+			} else if cleaned[i] == '}' {
+				braceCount--
+				if braceCount == 0 {
+					endIdx = i + 1
+					break
+				}
+			}
+		}
+		if endIdx > startIdx {
+			cleaned = cleaned[startIdx:endIdx]
+		}
 	}
 
-	// WAV: starts with "RIFF"
-	if string(data[:4]) == "RIFF" {
-		return "audio/wav"
-	}
-
-	// WebM: starts with 0x1A 0x45 0xDF 0xA3
-	if data[0] == 0x1A && data[1] == 0x45 && data[2] == 0xDF && data[3] == 0xA3 {
-		return "audio/webm"
-	}
-
-	// OGG: starts with "OggS"
-	if string(data[:4]) == "OggS" {
-		return "audio/ogg"
-	}
-
-	// MP3: starts with ID3 or 0xFF 0xFB
-	if string(data[:3]) == "ID3" || (data[0] == 0xFF && (data[1]&0xE0) == 0xE0) {
-		return "audio/mp3"
-	}
-
-	// Default to WebM (common browser format)
-	return "audio/webm"
+	return strings.TrimSpace(cleaned)
 }
