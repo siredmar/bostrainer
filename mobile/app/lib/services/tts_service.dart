@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -13,6 +14,7 @@ class TtsService {
   bool _initialized = false;
   bool _speaking = false;
   String? _tempDir;
+  String? _extDir; // External files dir where flutter_tts writes synthesized files
 
   bool get isInitialized => _initialized;
   bool get isSpeaking => _speaking;
@@ -41,9 +43,15 @@ class TtsService {
       final dir = await getTemporaryDirectory();
       _tempDir = dir.path;
 
+      // flutter_tts synthesizeToFile on Android writes to getExternalFilesDir()
+      final extDir = await getExternalStorageDirectory();
+      _extDir = extDir?.path;
+
       _initialized = true;
+      debugPrint('[TTS] Initialized, tempDir=$_tempDir, extDir=$_extDir');
       return true;
     } catch (e) {
+      debugPrint('[TTS] Init failed: $e');
       _initialized = false;
       return false;
     }
@@ -69,6 +77,7 @@ class TtsService {
       if (!completer.isCompleted) completer.complete();
     });
 
+    debugPrint('[TTS] speakDirect: "$prepared"');
     await _tts.speak(prepared);
     return completer.future;
   }
@@ -85,32 +94,55 @@ class TtsService {
     _speaking = true;
 
     try {
-      // Synthesize to WAV file
-      final wavPath = '$_tempDir/tts_raw.wav';
-      final completer = Completer<void>();
+      // flutter_tts synthesizeToFile prepends getExternalFilesDir() to filename
+      const rawFileName = 'tts_raw.wav';
+      final wavReadPath = _extDir != null
+          ? '$_extDir/$rawFileName'
+          : '$_tempDir/$rawFileName';
 
-      _tts.setCompletionHandler(() {
-        if (!completer.isCompleted) completer.complete();
-      });
-      _tts.setErrorHandler((msg) {
-        if (!completer.isCompleted) completer.completeError(Exception('TTS: $msg'));
-      });
+      // Delete old file first
+      final oldFile = File(wavReadPath);
+      if (await oldFile.exists()) await oldFile.delete();
 
-      await _tts.synthesizeToFile(prepared, wavPath);
-      await completer.future;
+      debugPrint('[TTS] synthesizeToFile: "$prepared" (fileName=$rawFileName, expectAt=$wavReadPath)');
 
-      // Read WAV, extract PCM data
-      final wavFile = File(wavPath);
+      // Pass just the filename — flutter_tts prepends the external files dir
+      final result = await _tts.synthesizeToFile(prepared, rawFileName);
+      debugPrint('[TTS] synthesizeToFile result: $result');
+
+      // Wait for file to appear
+      File wavFile = File(wavReadPath);
+      for (int i = 0; i < 50; i++) {
+        if (await wavFile.exists()) {
+          final size = await wavFile.length();
+          if (size > 44) {
+            debugPrint('[TTS] WAV file ready: $size bytes');
+            break;
+          }
+        }
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+
       if (!await wavFile.exists()) {
-        _speaking = false;
+        debugPrint('[TTS] WAV file not found at $wavReadPath, falling back to direct speak');
+        await _fallbackSpeak(prepared);
         return;
       }
+
       final wavBytes = await wavFile.readAsBytes();
+      debugPrint('[TTS] WAV read: ${wavBytes.length} bytes, '
+          'header: ${wavBytes.length >= 4 ? wavBytes.sublist(0, 4) : "too short"}');
+
       final parsed = _parseWav(wavBytes);
       if (parsed == null) {
-        _speaking = false;
+        debugPrint('[TTS] WAV parse failed, falling back to direct speak');
+        await _fallbackSpeak(prepared);
         return;
       }
+
+      debugPrint('[TTS] WAV parsed: ${parsed.sampleRate}Hz, '
+          '${parsed.channels}ch, ${parsed.bitsPerSample}bit, '
+          '${parsed.pcmData.length} bytes PCM');
 
       // Process audio
       final processed = AudioProcessor.process(
@@ -130,6 +162,7 @@ class TtsService {
         bitsPerSample: 16,
       );
       await File(outPath).writeAsBytes(outWav);
+      debugPrint('[TTS] Processed WAV written: ${outWav.length} bytes -> $outPath');
 
       // Play with just_audio
       await _player.setFilePath(outPath);
@@ -143,11 +176,39 @@ class TtsService {
       });
       await _player.play();
       await playCompleter.future;
-    } catch (_) {
-      // Non-fatal
+      debugPrint('[TTS] Playback complete');
+    } catch (e) {
+      debugPrint('[TTS] speakWithRadioEffect error: $e');
+      // Try fallback
+      try {
+        await _fallbackSpeak(prepareTtsText(text));
+      } catch (_) {}
     } finally {
       _speaking = false;
     }
+  }
+
+  /// Fallback: speak directly without radio effects.
+  Future<void> _fallbackSpeak(String prepared) async {
+    debugPrint('[TTS] Fallback to direct speak');
+    final completer = Completer<void>();
+
+    _tts.setCompletionHandler(() {
+      if (!completer.isCompleted) completer.complete();
+    });
+    _tts.setErrorHandler((msg) {
+      if (!completer.isCompleted) completer.completeError(Exception('TTS: $msg'));
+    });
+    _tts.setCancelHandler(() {
+      if (!completer.isCompleted) completer.complete();
+    });
+
+    await _tts.speak(prepared);
+    await completer.future.timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => debugPrint('[TTS] Fallback speak timed out'),
+    );
+    _speaking = false;
   }
 
   Future<void> stop() async {
