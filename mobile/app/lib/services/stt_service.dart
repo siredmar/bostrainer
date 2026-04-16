@@ -38,6 +38,7 @@ class SttService extends ChangeNotifier {
 
   /// Initialize the provider for the configured engine.
   /// Only loads already-downloaded models — does NOT trigger downloads.
+  /// If initialization fails, falls back to Platform STT.
   Future<bool> initialize() async {
     final engine = _settings.sttEngine;
     debugPrint('[SttService] Initializing engine: ${engine.name}');
@@ -56,31 +57,55 @@ class SttService extends ChangeNotifier {
     _modelMissing = false;
 
     // Step 2: Create and initialize the provider
-    _provider?.removeListener(_onProviderChanged);
-    _provider?.dispose();
+    final ok = await _initProvider(engine);
+    if (ok) return true;
 
-    switch (engine) {
-      case SttEngine.vosk:
-        _provider = VoskSttProvider(
-          modelPath: _modelManager.voskModelPath,
-        );
-        break;
-      case SttEngine.sherpaOnnx:
-        _provider = SherpaSttProvider(
-          encoderPath: _modelManager.encoderPath,
-          decoderPath: _modelManager.decoderPath,
-          tokensPath: _modelManager.tokensPath,
-        );
-        break;
-      case SttEngine.platform:
-        _provider = PlatformSttProvider();
-        break;
+    // Step 3: Fallback to Platform STT if native engine fails
+    if (engine != SttEngine.platform) {
+      debugPrint('[SttService] ${engine.name} failed, falling back to Platform STT');
+      final fallbackOk = await _initProvider(SttEngine.platform);
+      if (fallbackOk) {
+        _safeNotify();
+        return true;
+      }
     }
 
-    _provider!.addListener(_onProviderChanged);
-    final ok = await _provider!.initialize();
     _safeNotify();
-    return ok;
+    return false;
+  }
+
+  Future<bool> _initProvider(SttEngine engine) async {
+    _provider?.removeListener(_onProviderChanged);
+    _provider?.dispose();
+    _provider = null;
+
+    try {
+      switch (engine) {
+        case SttEngine.vosk:
+          _provider = VoskSttProvider(
+            modelPath: _modelManager.voskModelPath,
+          );
+          break;
+        case SttEngine.sherpaOnnx:
+          _provider = SherpaSttProvider(
+            encoderPath: _modelManager.encoderPath,
+            decoderPath: _modelManager.decoderPath,
+            tokensPath: _modelManager.tokensPath,
+          );
+          break;
+        case SttEngine.platform:
+          _provider = PlatformSttProvider();
+          break;
+      }
+
+      _provider!.addListener(_onProviderChanged);
+      return await _provider!.initialize();
+    } catch (e) {
+      debugPrint('[SttService] Provider init crashed: $e');
+      _provider?.dispose();
+      _provider = null;
+      return false;
+    }
   }
 
   Future<void> startListening() async {

@@ -197,7 +197,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         items: VoskModelSize.values.map((size) {
                           final labels = {
                             VoskModelSize.small: 'Small (~45 MB) — schnell, weniger genau',
-                            VoskModelSize.large: 'Large (~420 MB) — deutlich genauer',
+                            VoskModelSize.large: 'Large (~420 MB) — genauer, ⚠️ hoher RAM-Bedarf',
                           };
                           return DropdownMenuItem(
                             value: size,
