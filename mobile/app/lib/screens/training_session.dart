@@ -23,32 +23,31 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
   Session? _session;
   final List<ChatMessage> _messages = [];
   final TextEditingController _textController = TextEditingController();
-  final SttService _stt = SttService();
+  late final SttService _stt;
   final TtsService _tts = TtsService();
   bool _isLoading = true;
   bool _isSending = false;
   bool _isListening = false;
   bool _isTranscribing = false;
   bool _isSpeaking = false;
-  String? _error;
-  String? _sttError;
   String _partialText = '';
+  String? _error;
 
   @override
   void initState() {
     super.initState();
+    _stt = context.read<SttService>();
+    _stt.addListener(_onSttChanged);
     _startSession();
-    _initStt();
     _initTts();
   }
 
-  Future<void> _initStt() async {
-    final ok = await _stt.initialize();
+  void _onSttChanged() {
     if (!mounted) return;
     setState(() {
-      if (!ok) {
-        _sttError = _stt.error ?? 'Spracherkennung nicht verfügbar';
-      }
+      _isListening = _stt.isListening;
+      _isTranscribing = _stt.isTranscribing;
+      _partialText = _stt.currentText;
     });
   }
 
@@ -74,34 +73,18 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
 
   void _onPttStart() {
     if (!_stt.isInitialized || _isSending || _isSpeaking) return;
-    // Stop TTS if still speaking
     _tts.stop();
     setState(() {
-      _isListening = true;
       _isSpeaking = false;
-      _partialText = '';
-      _sttError = null;
     });
-    _stt.startListening(
-      onResult: (text, isFinal) {
-        setState(() {
-          _partialText = text;
-        });
-      },
-    );
+    _stt.startListening();
   }
 
   Future<void> _onPttEnd() async {
-    if (!_isListening) return;
-    setState(() {
-      _isListening = false;
-      _isTranscribing = true;
-    });
+    if (!_stt.isListening) return;
 
     final text = await _stt.stopListening();
     if (!mounted) return;
-
-    setState(() => _isTranscribing = false);
 
     if (text.trim().isNotEmpty) {
       _sendMessage(text.trim());
@@ -114,7 +97,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
     setState(() {
       _messages.add(ChatMessage(role: 'user', text: text));
       _isSending = true;
-      _partialText = '';
     });
     _textController.clear();
 
@@ -219,8 +201,8 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
 
   @override
   void dispose() {
+    _stt.removeListener(_onSttChanged);
     _textController.dispose();
-    _stt.dispose();
     _tts.dispose();
     if (_session != null) {
       context.read<ApiService>().deleteSession(_session!.sessionId);
@@ -270,32 +252,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
                     // Briefing card
                     if (_session != null && _messages.isEmpty)
                       _BriefingCard(session: _session!),
-                    // STT error banner (only in voice mode)
-                    if (useVoice && _sttError != null)
-                      Container(
-                        width: double.infinity,
-                        color: Colors.orange.shade900,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.warning, size: 18, color: Colors.white),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _sttError!,
-                                style: const TextStyle(fontSize: 12, color: Colors.white),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                setState(() => _sttError = null);
-                                _initStt();
-                              },
-                              child: const Text('Retry', style: TextStyle(fontSize: 12)),
-                            ),
-                          ],
-                        ),
-                      ),
+
                     // Transcript
                     Expanded(
                       child: TranscriptList(
@@ -335,13 +292,37 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen> {
                           ),
                         ),
                         child: SafeArea(
-                          child: PttButton(
-                            onPressStart: _onPttStart,
-                            onPressEnd: _onPttEnd,
-                            isListening: _isListening,
-                            isTranscribing: _isTranscribing,
-                            isDisabled: _isSending || _isTranscribing || _isSpeaking || !_stt.isInitialized,
-                            partialText: _partialText,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (!_stt.isInitialized)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.orange.shade300),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Sprachmodell wird geladen…',
+                                        style: TextStyle(fontSize: 12, color: Colors.orange.shade300),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              PttButton(
+                                onPressStart: _onPttStart,
+                                onPressEnd: _onPttEnd,
+                                isRecording: _isListening,
+                                isTranscribing: _isTranscribing,
+                                isDisabled: _isSending || _isTranscribing || _isSpeaking || !_stt.isInitialized,
+                                partialText: _stt.supportsStreaming ? _partialText : null,
+                              ),
+                            ],
                           ),
                         ),
                       )
