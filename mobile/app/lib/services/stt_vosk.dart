@@ -11,6 +11,7 @@ import 'stt_provider.dart';
 /// directly. Delivers partial results while the user is speaking.
 class VoskSttProvider extends SttProvider {
   final String modelPath;
+  final List<String>? grammar;
   final VoskFlutterPlugin _vosk = VoskFlutterPlugin.instance();
   SpeechService? _speechService;
   Recognizer? _recognizer;
@@ -22,7 +23,7 @@ class VoskSttProvider extends SttProvider {
   String _partialText = '';
   String? _error;
 
-  VoskSttProvider({required this.modelPath});
+  VoskSttProvider({required this.modelPath, this.grammar});
 
   @override
   bool get isInitialized => _initialized;
@@ -43,10 +44,14 @@ class VoskSttProvider extends SttProvider {
 
     try {
       debugPrint('[Vosk] Loading model from $modelPath');
+      if (grammar != null && grammar!.isNotEmpty) {
+        debugPrint('[Vosk] Using grammar: $grammar');
+      }
       final model = await _vosk.createModel(modelPath);
       _recognizer = await _vosk.createRecognizer(
         model: model,
         sampleRate: 16000,
+        grammar: (grammar != null && grammar!.isNotEmpty) ? grammar : null,
       );
       _speechService = await _vosk.initSpeechService(_recognizer!);
 

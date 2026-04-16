@@ -18,8 +18,22 @@ class SettingsService extends ChangeNotifier {
   static const _keySttEngine = 'stt_engine';
   static const _keySherpaModelSize = 'sherpa_model_size';
   static const _keyVoskModelSize = 'vosk_model_size';
+  static const _keyVoskGrammarEnabled = 'vosk_grammar_enabled';
+  static const _keyVoskGrammarWords = 'vosk_grammar_words';
   static const defaultHost = '192.168.1.100';
   static const defaultPort = 8080;
+  static const defaultVoskGrammarWords = [
+    'angriffstrupp',
+    'wassertrupp',
+    'schlauchtrupp',
+    'leitstelle',
+    'kommen',
+    'verstanden',
+    'hier',
+    'von',
+    'florian',
+    '[unk]',
+  ];
 
   String _host = defaultHost;
   int _port = defaultPort;
@@ -31,6 +45,8 @@ class SettingsService extends ChangeNotifier {
   SttEngine _sttEngine = SttEngine.vosk;
   SherpaModelSize _sherpaModelSize = SherpaModelSize.small;
   VoskModelSize _voskModelSize = VoskModelSize.small;
+  bool _voskGrammarEnabled = false;
+  List<String> _voskGrammarWords = List.from(defaultVoskGrammarWords);
   bool _loaded = false;
 
   String get host => _host;
@@ -45,6 +61,8 @@ class SettingsService extends ChangeNotifier {
   SttEngine get sttEngine => _sttEngine;
   SherpaModelSize get sherpaModelSize => _sherpaModelSize;
   VoskModelSize get voskModelSize => _voskModelSize;
+  bool get voskGrammarEnabled => _voskGrammarEnabled;
+  List<String> get voskGrammarWords => List.unmodifiable(_voskGrammarWords);
   bool get isLoaded => _loaded;
   String get baseUrl => 'http://$_host:$_port';
 
@@ -71,6 +89,9 @@ class SettingsService extends ChangeNotifier {
       (e) => e.name == (prefs.getString(_keyVoskModelSize) ?? ''),
       orElse: () => VoskModelSize.small,
     );
+    _voskGrammarEnabled = prefs.getBool(_keyVoskGrammarEnabled) ?? false;
+    final savedWords = prefs.getStringList(_keyVoskGrammarWords);
+    _voskGrammarWords = savedWords ?? List.from(defaultVoskGrammarWords);
     _loaded = true;
     notifyListeners();
   }
@@ -144,6 +165,21 @@ class SettingsService extends ChangeNotifier {
     _voskModelSize = size;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyVoskModelSize, size.name);
+    notifyListeners();
+  }
+
+  Future<void> setVoskGrammarEnabled(bool enabled) async {
+    if (_voskGrammarEnabled == enabled) return;
+    _voskGrammarEnabled = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyVoskGrammarEnabled, enabled);
+    notifyListeners();
+  }
+
+  Future<void> setVoskGrammarWords(List<String> words) async {
+    _voskGrammarWords = words;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_keyVoskGrammarWords, words);
     notifyListeners();
   }
 }

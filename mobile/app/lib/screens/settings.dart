@@ -219,6 +219,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         voskSize: settings.voskModelSize,
                       ),
                     ),
+                    if (settings.voskModelSize == VoskModelSize.small) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SwitchListTile(
+                              title: const Text('Grammar-Modus'),
+                              subtitle: const Text(
+                                'Erkennung auf BOS-Vokabular einschränken (schneller & genauer)',
+                              ),
+                              value: settings.voskGrammarEnabled,
+                              onChanged: (v) => settings.setVoskGrammarEnabled(v),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            if (settings.voskGrammarEnabled) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'Wörterliste (eins pro Zeile):',
+                                style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                              ),
+                              const SizedBox(height: 4),
+                              _GrammarEditor(
+                                words: settings.voskGrammarWords,
+                                onChanged: (words) => settings.setVoskGrammarWords(words),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Änderung erfordert App-Neustart',
+                                style: TextStyle(fontSize: 11, color: Colors.orange.shade300),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                   const SizedBox(height: 8),
                   _InputModeCard(
@@ -549,6 +586,87 @@ class _ModelDownloadButton extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _GrammarEditor extends StatefulWidget {
+  final List<String> words;
+  final ValueChanged<List<String>> onChanged;
+
+  const _GrammarEditor({required this.words, required this.onChanged});
+
+  @override
+  State<_GrammarEditor> createState() => _GrammarEditorState();
+}
+
+class _GrammarEditorState extends State<_GrammarEditor> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: widget.words.join('\n'),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _GrammarEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final current = _controller.text.split('\n').where((w) => w.trim().isNotEmpty).map((w) => w.trim().toLowerCase()).toList();
+    if (current.join(',') != widget.words.join(',')) {
+      _controller.text = widget.words.join('\n');
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final words = _controller.text
+        .split('\n')
+        .map((w) => w.trim().toLowerCase())
+        .where((w) => w.isNotEmpty)
+        .toList();
+    if (!words.contains('[unk]')) {
+      words.add('[unk]');
+    }
+    widget.onChanged(words);
+    FocusScope.of(context).unfocus();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${words.length} Wörter gespeichert')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _controller,
+          maxLines: 8,
+          minLines: 4,
+          style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            isDense: true,
+            hintText: 'angriffstrupp\nwassertrupp\nkommen\n...',
+          ),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton.tonal(
+            onPressed: _save,
+            child: const Text('Wörterliste speichern'),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -84,6 +84,9 @@ class SttService extends ChangeNotifier {
         case SttEngine.vosk:
           _provider = VoskSttProvider(
             modelPath: _modelManager.voskModelPath,
+            grammar: (_settings.voskGrammarEnabled && _settings.voskModelSize == VoskModelSize.small)
+                ? _settings.voskGrammarWords
+                : null,
           );
           break;
         case SttEngine.sherpaOnnx:
