@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Push-to-talk button widget.
-/// Hold to record, release to send. Shows visual feedback during recording
-/// and a transcribing indicator while the engine finalizes.
+/// Hold to record, release to send. Shows visual feedback during
+/// recording, partial text for streaming engines, and a transcribing
+/// indicator while non-streaming engines process audio.
 class PttButton extends StatefulWidget {
   final VoidCallback onPressStart;
   final VoidCallback onPressEnd;
-  final bool isListening;
+  final bool isRecording;
   final bool isTranscribing;
   final bool isDisabled;
   final String? partialText;
@@ -16,7 +17,7 @@ class PttButton extends StatefulWidget {
     super.key,
     required this.onPressStart,
     required this.onPressEnd,
-    this.isListening = false,
+    this.isRecording = false,
     this.isTranscribing = false,
     this.isDisabled = false,
     this.partialText,
@@ -46,9 +47,9 @@ class _PttButtonState extends State<PttButton>
   @override
   void didUpdateWidget(PttButton old) {
     super.didUpdateWidget(old);
-    if (widget.isListening && !old.isListening) {
+    if (widget.isRecording && !old.isRecording) {
       _pulseController.repeat(reverse: true);
-    } else if (!widget.isListening && old.isListening) {
+    } else if (!widget.isRecording && old.isRecording) {
       _pulseController.stop();
       _pulseController.reset();
     }
@@ -60,40 +61,34 @@ class _PttButtonState extends State<PttButton>
     super.dispose();
   }
 
-  bool get _showPreview =>
-      (widget.isListening || widget.isTranscribing) &&
-      widget.partialText != null &&
-      widget.partialText!.isNotEmpty;
-
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Partial transcription preview (visible during listening AND transcribing)
-        if (_showPreview)
-          Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade800,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.hearing, size: 16, color: Colors.amber.shade300),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    widget.partialText!,
-                    style: TextStyle(
-                      color: Colors.grey.shade300,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
+        // Partial text from streaming STT
+        if (widget.isRecording &&
+            widget.partialText != null &&
+            widget.partialText!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade900,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                widget.partialText!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.green.shade300,
+                  fontStyle: FontStyle.italic,
                 ),
-              ],
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
         // Status text
@@ -119,14 +114,14 @@ class _PttButtonState extends State<PttButton>
                   ],
                 )
               : Text(
-                  widget.isListening
-                      ? '🎙 Sprechen...'
+                  widget.isRecording
+                      ? '🎙 Aufnahme...'
                       : widget.isDisabled
                           ? '⏳ Bitte warten...'
                           : 'Zum Sprechen gedrückt halten',
                   style: TextStyle(
                     fontSize: 13,
-                    color: widget.isListening
+                    color: widget.isRecording
                         ? Colors.red.shade300
                         : Colors.grey.shade500,
                   ),
@@ -150,7 +145,7 @@ class _PttButtonState extends State<PttButton>
             animation: _pulseAnimation,
             builder: (context, child) {
               return Transform.scale(
-                scale: widget.isListening ? _pulseAnimation.value : 1.0,
+                scale: widget.isRecording ? _pulseAnimation.value : 1.0,
                 child: child,
               );
             },
@@ -159,14 +154,14 @@ class _PttButtonState extends State<PttButton>
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: widget.isListening
+                color: widget.isRecording
                     ? Colors.red.shade600
                     : widget.isTranscribing
                         ? Colors.amber.shade800
                         : widget.isDisabled
                             ? Colors.grey.shade700
                             : Colors.red.shade800,
-                boxShadow: widget.isListening
+                boxShadow: widget.isRecording
                     ? [
                         BoxShadow(
                           color: Colors.red.withValues(alpha: 0.5),
@@ -186,7 +181,7 @@ class _PttButtonState extends State<PttButton>
                       ),
                     )
                   : Icon(
-                      widget.isListening ? Icons.mic : Icons.mic_none,
+                      widget.isRecording ? Icons.mic : Icons.mic_none,
                       color: widget.isDisabled
                           ? Colors.grey.shade500
                           : Colors.white,

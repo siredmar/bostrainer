@@ -1,150 +1,113 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
-import 'package:speech_to_text/speech_to_text.dart';
 
-/// Platform STT service using Google Speech (Android) / Apple Speech (iOS).
+import 'model_manager.dart';
+import 'settings_service.dart';
+import 'stt_platform.dart';
+import 'stt_provider.dart';
+import 'stt_sherpa.dart';
+import 'stt_vosk.dart';
+
+/// Facade that delegates to the active [SttProvider] based on settings.
 ///
-/// Recording and transcription are decoupled from the PTT button:
-/// - PTT hold: audio streams to recognizer, partial results shown as preview
-/// - PTT release: `stopListening()` tells the engine to finalize, then waits
-///   for the final transcript before returning. The caller only sends to the
-///   AI once the full text is available.
+/// Created once at app startup. Reads the selected STT engine from
+/// [SettingsService] and creates the appropriate provider. The provider
+/// is initialized lazily (models must be downloaded first via settings).
 class SttService extends ChangeNotifier {
-  final SpeechToText _speech = SpeechToText();
-  bool _initialized = false;
-  bool _isListening = false;
-  bool _isTranscribing = false;
-  String _currentText = '';
-  String? _error;
-  Completer<String>? _finalResultCompleter;
+  final ModelManager _modelManager;
+  final SettingsService _settings;
+  SttProvider? _provider;
+  bool _disposed = false;
+  bool _modelMissing = false;
 
-  bool get isInitialized => _initialized;
-  bool get isListening => _isListening;
-  bool get isTranscribing => _isTranscribing;
-  String get currentText => _currentText;
-  String? get error => _error;
+  SttService({
+    required ModelManager modelManager,
+    required SettingsService settings,
+  })  : _modelManager = modelManager,
+        _settings = settings;
 
+  SttProvider? get provider => _provider;
+  bool get isInitialized => _provider?.isInitialized ?? false;
+  bool get isListening => _provider?.isListening ?? false;
+  bool get isTranscribing => _provider?.isTranscribing ?? false;
+  bool get supportsStreaming => _provider?.supportsStreaming ?? false;
+  String get currentText => _provider?.currentText ?? '';
+  String? get error => _provider?.error;
+  bool get modelMissing => _modelMissing;
+
+  SttEngine get activeEngine => _settings.sttEngine;
+
+  /// Initialize the provider for the configured engine.
+  /// Only loads already-downloaded models — does NOT trigger downloads.
   Future<bool> initialize() async {
-    try {
-      _initialized = await _speech.initialize(
-        onError: (error) {
-          debugPrint('STT error: ${error.errorMsg} (permanent: ${error.permanent})');
-          if (error.permanent) {
-            _error = error.errorMsg;
-            _isListening = false;
-            _isTranscribing = false;
-            _finalResultCompleter?.complete(_currentText);
-            _finalResultCompleter = null;
-            notifyListeners();
-          }
-        },
-        onStatus: (status) {
-          debugPrint('STT status: $status');
-          // When engine signals done, resolve the completer if pending
-          if (status == 'done' || status == 'notListening') {
-            if (_finalResultCompleter != null && !_finalResultCompleter!.isCompleted) {
-              _finalResultCompleter!.complete(_currentText);
-            }
-            _isTranscribing = false;
-            notifyListeners();
-          }
-        },
-      );
-      if (!_initialized) {
-        _error = 'Spracherkennung nicht verfügbar';
-      }
-      notifyListeners();
-      return _initialized;
-    } catch (e) {
-      _error = e.toString();
-      _initialized = false;
-      notifyListeners();
+    final engine = _settings.sttEngine;
+    debugPrint('[SttService] Initializing engine: ${engine.name}');
+
+    // Step 1: Check if model is available (no download)
+    final pathsOk = await _modelManager.prepareModelPaths(
+      engine,
+      sherpaSize: _settings.sherpaModelSize,
+      voskSize: _settings.voskModelSize,
+    );
+    if (!pathsOk) {
+      _modelMissing = true;
+      _safeNotify();
       return false;
     }
-  }
+    _modelMissing = false;
 
-  /// Start listening. Calls [onResult] with live partial transcription.
-  Future<void> startListening({
-    required void Function(String text, bool isFinal) onResult,
-  }) async {
-    if (!_initialized) {
-      _error = 'STT nicht initialisiert';
-      notifyListeners();
-      return;
+    // Step 2: Create and initialize the provider
+    _provider?.removeListener(_onProviderChanged);
+    _provider?.dispose();
+
+    switch (engine) {
+      case SttEngine.vosk:
+        _provider = VoskSttProvider(
+          modelPath: _modelManager.voskModelPath,
+        );
+        break;
+      case SttEngine.sherpaOnnx:
+        _provider = SherpaSttProvider(
+          encoderPath: _modelManager.encoderPath,
+          decoderPath: _modelManager.decoderPath,
+          tokensPath: _modelManager.tokensPath,
+        );
+        break;
+      case SttEngine.platform:
+        _provider = PlatformSttProvider();
+        break;
     }
 
-    _error = null;
-    _currentText = '';
-    _isListening = true;
-    _isTranscribing = false;
-    _finalResultCompleter = null;
-    notifyListeners();
-
-    await _speech.listen(
-      onResult: (result) {
-        _currentText = result.recognizedWords;
-        onResult(result.recognizedWords, result.finalResult);
-        // If we're waiting for final and got it, resolve
-        if (result.finalResult &&
-            _finalResultCompleter != null &&
-            !_finalResultCompleter!.isCompleted) {
-          _finalResultCompleter!.complete(_currentText);
-        }
-      },
-      localeId: 'de_DE',
-      pauseFor: const Duration(seconds: 60),
-      listenFor: const Duration(seconds: 120),
-      listenOptions: SpeechListenOptions(
-        listenMode: ListenMode.dictation,
-        cancelOnError: false,
-        partialResults: true,
-      ),
-    );
+    _provider!.addListener(_onProviderChanged);
+    final ok = await _provider!.initialize();
+    _safeNotify();
+    return ok;
   }
 
-  /// Stop recording and wait for the engine to deliver the final transcript.
-  /// Returns the complete recognized text.
+  Future<void> startListening() async {
+    await _provider?.startListening();
+  }
+
   Future<String> stopListening() async {
-    _isListening = false;
-    _isTranscribing = true;
-    notifyListeners();
-
-    // Set up completer to wait for the final result
-    _finalResultCompleter = Completer<String>();
-
-    // Tell the engine to stop and finalize
-    await _speech.stop();
-
-    // Wait for final result (with timeout to avoid hanging forever)
-    final text = await _finalResultCompleter!.future.timeout(
-      const Duration(seconds: 3),
-      onTimeout: () => _currentText,
-    );
-
-    _isTranscribing = false;
-    _finalResultCompleter = null;
-    notifyListeners();
-    return text;
+    return await _provider?.stopListening() ?? '';
   }
 
   Future<void> cancelListening() async {
-    await _speech.cancel();
-    _isListening = false;
-    _isTranscribing = false;
-    _currentText = '';
-    _finalResultCompleter?.complete('');
-    _finalResultCompleter = null;
-    notifyListeners();
+    await _provider?.cancelListening();
+  }
+
+  void _onProviderChanged() {
+    _safeNotify();
+  }
+
+  void _safeNotify() {
+    if (!_disposed) notifyListeners();
   }
 
   @override
   void dispose() {
-    _speech.cancel();
-    _finalResultCompleter?.complete('');
-    _isListening = false;
-    _isTranscribing = false;
-    _initialized = false;
+    _disposed = true;
+    _provider?.removeListener(_onProviderChanged);
+    _provider?.dispose();
     super.dispose();
   }
 }

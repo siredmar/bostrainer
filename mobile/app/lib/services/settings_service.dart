@@ -3,6 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 enum InputMode { voice, text }
 enum OutputMode { voice, text }
+enum SttEngine { vosk, sherpaOnnx, platform }
+enum SherpaModelSize { tiny, small, medium }
+enum VoskModelSize { small, large }
 
 class SettingsService extends ChangeNotifier {
   static const _keyHost = 'server_host';
@@ -12,6 +15,9 @@ class SettingsService extends ChangeNotifier {
   static const _keyRadioFilter = 'radio_filter';
   static const _keyRadioNoise = 'radio_noise';
   static const _keyRadioNoiseDb = 'radio_noise_db';
+  static const _keySttEngine = 'stt_engine';
+  static const _keySherpaModelSize = 'sherpa_model_size';
+  static const _keyVoskModelSize = 'vosk_model_size';
   static const defaultHost = '192.168.1.100';
   static const defaultPort = 8080;
 
@@ -22,6 +28,9 @@ class SettingsService extends ChangeNotifier {
   bool _radioFilterEnabled = true;
   bool _radioNoiseEnabled = true;
   double _radioNoiseDb = -35.0;
+  SttEngine _sttEngine = SttEngine.vosk;
+  SherpaModelSize _sherpaModelSize = SherpaModelSize.small;
+  VoskModelSize _voskModelSize = VoskModelSize.small;
   bool _loaded = false;
 
   String get host => _host;
@@ -33,6 +42,9 @@ class SettingsService extends ChangeNotifier {
   bool get radioFilterEnabled => _radioFilterEnabled;
   bool get radioNoiseEnabled => _radioNoiseEnabled;
   double get radioNoiseDb => _radioNoiseDb;
+  SttEngine get sttEngine => _sttEngine;
+  SherpaModelSize get sherpaModelSize => _sherpaModelSize;
+  VoskModelSize get voskModelSize => _voskModelSize;
   bool get isLoaded => _loaded;
   String get baseUrl => 'http://$_host:$_port';
 
@@ -47,6 +59,18 @@ class SettingsService extends ChangeNotifier {
     _radioFilterEnabled = prefs.getBool(_keyRadioFilter) ?? true;
     _radioNoiseEnabled = prefs.getBool(_keyRadioNoise) ?? true;
     _radioNoiseDb = prefs.getDouble(_keyRadioNoiseDb) ?? -35.0;
+    _sttEngine = SttEngine.values.firstWhere(
+      (e) => e.name == (prefs.getString(_keySttEngine) ?? ''),
+      orElse: () => SttEngine.vosk,
+    );
+    _sherpaModelSize = SherpaModelSize.values.firstWhere(
+      (e) => e.name == (prefs.getString(_keySherpaModelSize) ?? ''),
+      orElse: () => SherpaModelSize.small,
+    );
+    _voskModelSize = VoskModelSize.values.firstWhere(
+      (e) => e.name == (prefs.getString(_keyVoskModelSize) ?? ''),
+      orElse: () => VoskModelSize.small,
+    );
     _loaded = true;
     notifyListeners();
   }
@@ -96,6 +120,30 @@ class SettingsService extends ChangeNotifier {
     _radioNoiseDb = db;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_keyRadioNoiseDb, db);
+    notifyListeners();
+  }
+
+  Future<void> setSttEngine(SttEngine engine) async {
+    if (_sttEngine == engine) return;
+    _sttEngine = engine;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySttEngine, engine.name);
+    notifyListeners();
+  }
+
+  Future<void> setSherpaModelSize(SherpaModelSize size) async {
+    if (_sherpaModelSize == size) return;
+    _sherpaModelSize = size;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySherpaModelSize, size.name);
+    notifyListeners();
+  }
+
+  Future<void> setVoskModelSize(VoskModelSize size) async {
+    if (_voskModelSize == size) return;
+    _voskModelSize = size;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyVoskModelSize, size.name);
     notifyListeners();
   }
 }
